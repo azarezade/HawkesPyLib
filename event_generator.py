@@ -178,7 +178,6 @@ def verify_events(u, times, users, mu, alpha, w=1):
 
 def main():
     np.random.seed(200)
-
     t0 = 0
     tf = 100000
     n = 5
@@ -186,14 +185,11 @@ def main():
     mu_max = 0.01
     alpha_max = 0.1
 
-    # print(zero_func)
     mu, alpha = generate_model(n, sparsity, mu_max, alpha_max)
     times, users = generate_events(t0, tf, mu, alpha)
     # verify_events(0, times, users, mu, alpha)
 
     print(len(times))
-    # print(times[-3:-1])
-    # plot_intensity(0, 1000, times, users, mu, alpha)
 
 
 if __name__ == '__main__':
