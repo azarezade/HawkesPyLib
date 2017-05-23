@@ -189,6 +189,7 @@ def main():
     times, users = generate_events(t0, tf, mu, alpha)
 
     print(len(times))
+
     print(times)
 
 
