@@ -113,7 +113,6 @@ def main():
     mu, alpha = generate_model(n, sparsity, mu_max, alpha_max)
     # times, users = generate_events(mu, alpha, tf)
 
-    # print(mu)
     # print(len(times))
 
     # t = np.arange(0, tf, 0.1)
