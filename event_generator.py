@@ -187,7 +187,6 @@ def main():
 
     mu, alpha = generate_model(n, sparsity, mu_max, alpha_max)
     times, users = generate_events(t0, tf, mu, alpha)
-    # verify_events(0, times, users, mu, alpha)
 
     print(len(times))
 
