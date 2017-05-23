@@ -7,7 +7,7 @@ from numpy.linalg import inv
 from scipy.linalg import expm
 from scipy.optimize import fsolve
 import scipy.integrate as integrate
-from event_generator import generate_model, generate_events
+from event_generation import generate_model, generate_events
 
 
 def psi(t, alpha, w=1):

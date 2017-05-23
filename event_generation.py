@@ -116,7 +116,7 @@ def generate_events(t0, tf, mu, alpha, control=zero_func, g=default_kernel, tol=
         lambda_m = intensity(t, times, users, mu, alpha, control, g, tol)
         sum_lambda_m = np.sum(lambda_m)
 
-        t += np.random.exponential(1.0 / sum_lambda_m)
+        t += np.random.exponential(1 / sum_lambda_m)
         if t >= tf:
             break
 
@@ -177,7 +177,8 @@ def verify_events(u, times, users, mu, alpha, w=1):
 
 
 def main():
-    np.random.seed(200)
+    np.random.seed(100)
+
     t0 = 0
     tf = 100000
     n = 5
@@ -189,7 +190,6 @@ def main():
     times, users = generate_events(t0, tf, mu, alpha)
 
     print(len(times))
-
     print(times)
 
 
