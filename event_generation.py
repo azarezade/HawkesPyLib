@@ -1,4 +1,4 @@
-# __author__ = 'alza'
+# __author__ = 'Ali_Zarezade'
 
 import numpy as np
 import scipy as sp
@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 
 # TODO: remove default_kernel as input to function
 # TODO: use events as objects
+
 
 def default_kernel(x, w=1):
     return np.exp(-w * x)
@@ -114,14 +115,14 @@ def generate_events(t0, tf, mu, alpha, control=zero_func, g=default_kernel, tol=
 
     while t < tf:
         lambda_m = intensity(t, times, users, mu, alpha, control, g, tol)
-        sum_lambda_m = np.sum(lambda_m)
+        sum_lambda_m = sum(lambda_m)
 
         t += np.random.exponential(1 / sum_lambda_m)
         if t >= tf:
             break
 
         lambda_t = intensity(t, times, users, mu, alpha, control, g, tol)
-        sum_lambda_t = np.sum(lambda_t)
+        sum_lambda_t = sum(lambda_t)
 
         if np.random.uniform(0, 1) < (sum_lambda_t / sum_lambda_m):
             prob = lambda_t / sum_lambda_t
@@ -190,7 +191,7 @@ def main():
     times, users = generate_events(t0, tf, mu, alpha)
 
     print(len(times))
-    print(times)
+    print(times[-1])
 
 
 if __name__ == '__main__':
