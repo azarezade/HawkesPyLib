@@ -36,7 +36,6 @@ def compare_weighted_activity(mat_address):
     times_mehrdad, _ = generate_events(t0=t0, tf=tf, mu=mu + u_cam, alpha=alpha)
     times_optimal, _ = generate_events(t0=t0, tf=tf, mu=mu, alpha=alpha, control=u_optimal)
 
-    print("budget={}, \t base intensity sum".format(c, tf*sum(mu)))
     print("base \t\t num of event={}".format(len(times_base)))
     print("mehrdad \t num of event={} \t increase(%)={}".
           format(len(times_mehrdad), 100 * (len(times_mehrdad)-len(times_base)) / len(times_base)))
