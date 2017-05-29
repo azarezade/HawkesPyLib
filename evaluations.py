@@ -1,5 +1,7 @@
 # __author__ = 'Ali_Zarezade'
 
+import networkx as nx
+# import numpy as np
 
 from event_generation import *
 from activity_shaping import *
@@ -26,21 +28,57 @@ def compare_weighted_activity(mat_address):
     t0, tf, n, sparsity, mu_max, alpha_max, mu, alpha, b, c, d, u_cam = load_mat_file(mat_address)
     t_star = maximize_weighted_activity(b, c, d, t0, tf, alpha)
 
-    def u_optimal(t):
-        u = np.zeros(n)
+    def u_deg(t):
+        deg = np.zeros(n)
         for i in range(n):
-            u[i] = b * (t > t_star[i])
-        return u
+            deg[i] = np.count_nonzero(alpha[i, :])
+        return (deg / sum(deg)) * (c / tf)
+
+    def u_optimal(t):
+        return [b * (t > t_star[i]) for i in range(n)]
+
+    def u_mehrdad(t):
+        return [u_cam[i] for i in range(n)]
+
+    def u_prk(t):
+        G = nx.from_numpy_matrix(alpha)
+        pr = nx.pagerank(G)
+        weight = np.asanyarray(list(pr.values()))
+        return (weight / sum(weight)) * (c / tf)
+
+    def u_uniform(t):
+        return [c / (tf * n) for i in range(n)]
+
+    obj_uniform = eval_weighted_activity(tf, u_uniform, d, t0, tf, alpha, w)
+    obj_deg = eval_weighted_activity(tf, u_deg, d, t0, tf, alpha, w)
+    obj_prk = eval_weighted_activity(tf, u_prk, d, t0, tf, alpha, w)
+    obj_mehrdad = eval_weighted_activity(tf, u_mehrdad, d, t0, tf, alpha, w)
+    obj_optimal = eval_weighted_activity(tf, u_optimal, d, t0, tf, alpha, w)
+    print("obj_uniform={} \t\t ".format(obj_uniform))
+    print("obj_deg={} \t\t ".format(obj_deg))
+    print("obj_prk={} \t\t ".format(obj_prk))
+    print("obj_mehrdad={} \t\t ".format(obj_mehrdad))
+    print("obj_optimal={} \t\t ".format(obj_optimal))
+
 
     times_base, _ = generate_events(t0=t0, tf=tf, mu=mu, alpha=alpha)
     times_mehrdad, _ = generate_events(t0=t0, tf=tf, mu=mu + u_cam, alpha=alpha)
     times_optimal, _ = generate_events(t0=t0, tf=tf, mu=mu, alpha=alpha, control=u_optimal)
 
-    print("base \t\t num of event={}".format(len(times_base)))
-    print("mehrdad \t num of event={} \t increase(%)={}".
-          format(len(times_mehrdad), 100 * (len(times_mehrdad)-len(times_base)) / len(times_base)))
-    print("optimal \t num of event={} \t increase(%)={}".
-          format(len(times_optimal), 100 * (len(times_optimal) - len(times_base)) / len(times_base)))
+    def count_events(times, a, b):
+        k = 0
+        for i in range(len(times)):
+            if a < times[i] < b:
+                k += 1
+        return k
+
+    print("optimal \t total_event={} \t last_events={}".
+          format(len(times_base), count_events(times_base, 0.9 * tf, tf)))
+    print("mehrdad \t total_event={} \t last_events={}".
+          format(len(times_mehrdad), count_events(times_mehrdad, 0.9 * tf, tf)))
+    print("optimal \t total_event={} \t last_events={}".
+          format(len(times_optimal), count_events(times_optimal, 0.9 * tf, tf)))
+
     return
 
 
@@ -52,12 +90,28 @@ def compare_int_weighted_activity(t0, tf, b, c, d, w, n, sparsity, mu_max, alpha
     def u_optimal(t):
         return [b * (t < t_star[i]) for i in range(n)]
 
-    def u_poisson(t):
+    def u_uniform(t):
         return [c / (tf * n) for i in range(n)]
 
-    obj_poisson = eval_int_weighted_activity(u_poisson, d, t0, tf, alpha, w)
+    def u_prk(t):
+        G = nx.from_numpy_matrix(alpha)
+        pr = nx.pagerank(G)
+        weight = np.asanyarray(list(pr.values()))
+        return (weight / sum(weight)) * (c / tf)
+
+    def u_deg(t):
+        deg = np.zeros(n)
+        for i in range(n):
+            deg[i] = np.count_nonzero(alpha[i, :])
+        return (deg / sum(deg)) * (c / tf)
+
+    obj_deg = eval_int_weighted_activity(u_deg, d, t0, tf, alpha, w)
+    obj_prk = eval_int_weighted_activity(u_prk, d, t0, tf, alpha, w)
+    obj_uniform = eval_int_weighted_activity(u_uniform, d, t0, tf, alpha, w)
     obj_optimal = eval_int_weighted_activity(u_optimal, d, t0, tf, alpha, w)
-    print("obj_poisson={} \t\t ".format(obj_poisson))
+    print("obj_deg={} \t\t ".format(obj_deg))
+    print("obj_prk={} \t\t ".format(obj_prk))
+    print("obj_uniform={} \t\t ".format(obj_uniform))
     print("obj_optimal={} \t\t ".format(obj_optimal))
 
     times_base, _ = generate_events(t0=t0, tf=tf, mu=mu, alpha=alpha)
@@ -74,8 +128,8 @@ def compare_int_weighted_activity(t0, tf, b, c, d, w, n, sparsity, mu_max, alpha
 if __name__ == '__main__':
     # np.random.seed(10)
     t0 = 0
-    tf = 200
-    n = 10
+    tf = 100
+    n = 50
     sparsity = 0.3
     mu_max = 0.01
     alpha_max = 0.1
@@ -85,6 +139,7 @@ if __name__ == '__main__':
     c = 1. * tf * mu_max
     d = np.ones(n)
 
-    compare_weighted_activity('./data/mehrdad_shaping.mat')
+
+    # compare_weighted_activity('./data/mehrdad_shaping.mat')
     #
-    # compare_int_weighted_activity(t0, tf, b, c, d, w, n, sparsity, mu_max, alpha_max)
+    compare_int_weighted_activity(t0, tf, b, c, d, w, n, sparsity, mu_max, alpha_max)
