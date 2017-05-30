@@ -130,7 +130,7 @@ def generate_events(t0, tf, mu, alpha, control=zero_func, g=default_kernel, tol=
             times.append(t)
             users.append(u)
 
-        if not (len(times) % 500):
+        if not (len(times) % 500) and len(times) > 0:
             print("generated {} events up to time {}".format(len(times), times[-1]))
 
     return times, users

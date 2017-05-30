@@ -6,11 +6,12 @@ import scipy.io as sio
 
 from numpy.linalg import inv
 from scipy.linalg import logm, expm
-from scipy.optimize import fsolve
+from scipy.optimize import fsolve, brentq
 import scipy.integrate as integrate
 from event_generation import *
 
 # TODO: correct this line 'ub = psi(0, alpha).sum(axis=0).max()'
+# TODO: for small w the increasing/decreasing trend would be reversed! so all optimization should be changed!!
 
 
 def psi(t, alpha, w=1):
@@ -70,11 +71,13 @@ def maximize_weighted_activity(b, c, d, t0, tf, alpha, w=1, tol=1e-1):
     while abs((n * tf - sum(t)) * b - c) > tol:
         m = (ub + lb) / 2
         for i in range(n):
-            t[i] = fsolve(lambda s: psi(tf - s, alpha, w)[:, i].dot(d) - m, tf * 0.99)
-
+            if psi(0, alpha, w)[:, i].dot(d) < m:
+                t[i] = tf
+            else:
+                (t[i], rep) = brentq(lambda s: psi(tf-s, alpha, w)[:, i].dot(d) - m, 0, tf, full_output=True)
+                k = i
         print("ub={:.4f} \t lb={:.4f} \t t_star={} precision={} diff={}".
-              format(ub, lb, [int(i) for i in t], psi(t[i], alpha, w)[:, i].dot(d) - m, (n * tf - sum(t)) * b - c))
-        # print("ub={:.4f} \t lb={:.4f} \t t_star={}".format(ub, lb, [int(i) for i in t]))
+              format(ub, lb, [int(i) for i in t], psi(t[k], alpha, w)[:, k].dot(d) - m, (n * tf - sum(t)) * b - c))
         if (n * tf - sum(t)) * b > c:
             lb = m
         else:
@@ -136,9 +139,10 @@ def maximize_int_weighted_activity(b, c, d, t0, tf, alpha, w=1, tol=1e-1):
             if psi_int(0, t0, tf, alpha, w)[:, i].dot(d) < m:
                 t[i] = 0
             else:
-                t[i] = fsolve(lambda s: psi_int(s, t0, tf, alpha, w)[:, i].dot(d) - m, tf * 0.9)
+                (t[i], re) = brentq(lambda s: psi_int(s, t0, tf, alpha, w)[:, i].dot(d) - m, 0, tf, full_output=True)
+                k = i
         print("ub={:.4f} \t lb={:.4f} \t t_star={} precision={} diff={}".
-              format(ub, lb, [int(i) for i in t], psi_int(t[i], t0, tf, alpha, w)[:, i].dot(d) - m, sum(t) * b - c))
+              format(ub, lb, [int(i) for i in t], psi_int(t[k], t0, tf, alpha, w)[:, k].dot(d) - m, sum(t) * b - c))
         if sum(t) * b > c:
             lb = m
         else:
@@ -150,27 +154,17 @@ def main():
     # np.random.seed(100)
     t0 = 0
     tf = 100
-    n = 50
-    sparsity = 0.3
+    n = 10
+    sparsity = 0.1
     mu_max = 0.01
     alpha_max = 0.1
     w = 0.6
 
-    b = 1 * mu_max
+    b = 10 * mu_max
     c = 1 * tf * mu_max
     d = np.ones(n)
 
     mu, alpha = generate_model(n, sparsity, mu_max, alpha_max)
-
-    t_star = maximize_weighted_activity(b, c, d, t0, tf, alpha)
-
-    def u_star(t):
-        return [b * (t > t_star[i]) for i in range(n)]
-
-    print("base intensity budget={} results {}  in eta ".
-          format(sum(mu) * tf, inv(np.eye(n) - alpha).dot(mu).sum()))
-    print("optimal intensity budget={} results {}  in eta ".
-          format(c, eval_weighted_activity(tf, u_star, d, t0, tf, alpha)))
 
     # tt = np.arange(t0, tf, 1)
     # yy = np.zeros(len(tt))
@@ -187,6 +181,27 @@ def main():
     #         # yy[k] = psi_int(tt[k], t0, tf, alpha, w)[:, i].dot(d)
     #     plt.plot(tt, yy)
     # plt.show()
+
+    t_star = maximize_weighted_activity(b, c, d, t0, tf, alpha)
+
+    def u_star(t):
+        return [b * (t > t_star[i]) for i in range(n)]
+
+    def u_poisson(t):
+        return [c / (tf * n) for i in range(n)]
+
+    def u_base(t):
+        return mu
+
+    print('optimal \t', eval_weighted_activity(tf, u_star, d, t0, tf, alpha, w))
+    print('poisson \t', eval_weighted_activity(tf, u_poisson, d, t0, tf, alpha, w))
+    print('base \t', eval_weighted_activity(tf, u_base, d, t0, tf, alpha, w))
+    print("poisson intensity budget={} results {}  in eta ".
+          format(c, inv(np.eye(n) - alpha).dot((c/(tf*n))*np.ones(n)).sum()))
+    print("base intensity budget={} results {}  in eta ".
+          format(sum(mu) * tf, inv(np.eye(n) - alpha).dot(mu).sum()))
+    print("optimal intensity budget={} results {}  in eta ".
+          format(c, eval_weighted_activity(tf, u_star, d, t0, tf, alpha)))
 
     # t_star_int = maximize_int_weighted_activity(b, c, d, t0, tf, alpha, w)
     #

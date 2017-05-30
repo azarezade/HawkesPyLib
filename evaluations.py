@@ -72,7 +72,7 @@ def compare_weighted_activity(mat_address):
                 k += 1
         return k
 
-    print("optimal \t total_event={} \t last_events={}".
+    print("base \t total_event={} \t last_events={}".
           format(len(times_base), count_events(times_base, 0.9 * tf, tf)))
     print("mehrdad \t total_event={} \t last_events={}".
           format(len(times_mehrdad), count_events(times_mehrdad, 0.9 * tf, tf)))
@@ -105,17 +105,17 @@ def compare_int_weighted_activity(t0, tf, b, c, d, w, n, sparsity, mu_max, alpha
             deg[i] = np.count_nonzero(alpha[i, :])
         return (deg / sum(deg)) * (c / tf)
 
-    obj_deg = eval_int_weighted_activity(u_deg, d, t0, tf, alpha, w)
-    obj_prk = eval_int_weighted_activity(u_prk, d, t0, tf, alpha, w)
+    # obj_deg = eval_int_weighted_activity(u_deg, d, t0, tf, alpha, w)
+    # obj_prk = eval_int_weighted_activity(u_prk, d, t0, tf, alpha, w)
     obj_uniform = eval_int_weighted_activity(u_uniform, d, t0, tf, alpha, w)
     obj_optimal = eval_int_weighted_activity(u_optimal, d, t0, tf, alpha, w)
-    print("obj_deg={} \t\t ".format(obj_deg))
-    print("obj_prk={} \t\t ".format(obj_prk))
+    # print("obj_deg={} \t\t ".format(obj_deg))
+    # print("obj_prk={} \t\t ".format(obj_prk))
     print("obj_uniform={} \t\t ".format(obj_uniform))
     print("obj_optimal={} \t\t ".format(obj_optimal))
 
     times_base, _ = generate_events(t0=t0, tf=tf, mu=mu, alpha=alpha)
-    times_poisson, _ = generate_events(t0=t0, tf=tf, mu=mu + (c / (tf * n)), alpha=alpha)
+    times_poisson, _ = generate_events(t0=t0, tf=tf, mu=mu, alpha=alpha, control=u_uniform)
     times_optimal, _ = generate_events(t0=t0, tf=tf, mu=mu, alpha=alpha, control=u_optimal)
 
     print("poisson \t num of event={} \t increase(%)={}".
@@ -124,22 +124,67 @@ def compare_int_weighted_activity(t0, tf, b, c, d, w, n, sparsity, mu_max, alpha
           format(len(times_optimal), 100 * (len(times_optimal) - len(times_base)) / len(times_base)))
     return
 
+def compare_batch_int_weighted_activity(num):
+    mu, alpha = generate_model(n, sparsity, mu_max, alpha_max)
+    t_star = maximize_int_weighted_activity(b, c, d, t0, tf, alpha, w)
+
+    def u_optimal(t):
+        return [b * (t < t_star[i]) for i in range(n)]
+
+    def u_uniform(t):
+        return [c / (tf * n) for i in range(n)]
+
+    def u_prk(t):
+        G = nx.from_numpy_matrix(alpha)
+        pr = nx.pagerank(G)
+        weight = np.asanyarray(list(pr.values()))
+        return (weight / sum(weight)) * (c / tf)
+
+    def u_deg(t):
+        deg = np.zeros(n)
+        for i in range(n):
+            deg[i] = np.count_nonzero(alpha[i, :])
+        return (deg / sum(deg)) * (c / tf)
+
+    # obj_deg = eval_int_weighted_activity(u_deg, d, t0, tf, alpha, w)
+    # obj_prk = eval_int_weighted_activity(u_prk, d, t0, tf, alpha, w)
+    # obj_uniform = eval_int_weighted_activity(u_uniform, d, t0, tf, alpha, w)
+    # obj_optimal = eval_int_weighted_activity(u_optimal, d, t0, tf, alpha, w)
+    # print("obj_deg={} \t\t ".format(obj_deg))
+    # print("obj_prk={} \t\t ".format(obj_prk))
+    # print("obj_uniform={} \t\t ".format(obj_uniform))
+    # print("obj_optimal={} \t\t ".format(obj_optimal))
+
+    event_count_deg = 0
+    event_count_uniform = 0
+    event_count_optimal = 0
+    for ii in range(num):
+        # times_base, _ = generate_events(t0=t0, tf=tf, mu=mu, alpha=alpha)
+        times_deg, _ = generate_events(t0=t0, tf=tf, mu=mu, alpha=alpha, control=u_deg)
+        times_uniform, _ = generate_events(t0=t0, tf=tf, mu=mu, alpha=alpha, control=u_uniform)
+        times_optimal, _ = generate_events(t0=t0, tf=tf, mu=mu, alpha=alpha, control=u_optimal)
+        event_count_deg += len(times_deg)
+        event_count_uniform += len(times_uniform)
+        event_count_optimal += len(times_optimal)
+    print("deg={} \t uniform={} \t optimal={}".format(event_count_deg, event_count_uniform, event_count_optimal))
+    return
 
 if __name__ == '__main__':
-    # np.random.seed(10)
+    # np.random.seed(100)
     t0 = 0
     tf = 100
     n = 50
     sparsity = 0.3
     mu_max = 0.01
     alpha_max = 0.1
-    w = 1
+    w = 0.6
 
-    b = 1. * mu_max
-    c = 1. * tf * mu_max
+    b = 10 * mu_max
+    c = 1 * tf * mu_max
     d = np.ones(n)
 
 
-    # compare_weighted_activity('./data/mehrdad_shaping.mat')
+    compare_weighted_activity('./data/mehrdad_shaping.mat')
     #
-    compare_int_weighted_activity(t0, tf, b, c, d, w, n, sparsity, mu_max, alpha_max)
+    # compare_int_weighted_activity(t0, tf, b, c, d, w, n, sparsity, mu_max, alpha_max)
+    # compare_batch_int_weighted_activity(5)
