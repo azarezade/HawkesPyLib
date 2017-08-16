@@ -37,6 +37,7 @@ def generate_model(n, sparsity, mu_max, alpha_max):
     """
     mu = mu_max * np.random.rand(n,)
     alpha = alpha_max * sp.sparse.rand(n, n, density=sparsity).toarray()
+    # alpha = 0.5 * (alpha + np.transpose(alpha))
     return mu, alpha
 
 
@@ -56,7 +57,7 @@ def intensity(t, times, users, mu, alpha, control=zero_func, g=default_kernel, t
     
     Returns:
         (ndarray) intensity of the Hawkes process at time t given the history of events
-        
+
     Raises:
         ValueError: in case of invalid user-provided argument.
     """
