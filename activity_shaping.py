@@ -12,9 +12,6 @@ from scipy.optimize import fsolve, brentq
 import scipy.integrate as integrate
 from event_generation import *
 
-# TODO: correct this line 'ub = psi(0, alpha).sum(axis=0).max()'
-# TODO: for small w the increasing/decreasing trend would be reversed! so all optimization should be changed!!
-
 
 def psi(t, alpha, w=1.):
     """
@@ -62,10 +59,12 @@ def maximize_weighted_activity(b, c, d, t0, tf, alpha, w=1, tol=1e-1):
         tol (float): tolerance for attaining the b*sum(t)=c constraint
     """
     n = alpha.shape[0]
+
     r = np.abs(np.linalg.eig(alpha)[0])
     print("spectral radius = {}".format(max(r)))
     if max(r) > w:
         raise Exception("spectral radius is greater that w")
+
     if (n * tf) * b < c:
         print("equality constraint can't be attained")
         return np.ones(n) * tf
@@ -129,14 +128,19 @@ def maximize_int_weighted_activity(b, c, d, t0, tf, alpha, w=1, tol=1e-1):
         tol (float): tolerance for attaining the b*sum(t)=c constraint
     """
     n = alpha.shape[0]
-    ub = d.dot(psi_int(0, t0, tf, alpha, w)).max()
-    lb = 0
-    t = np.zeros(n)
+
+    r = np.abs(np.linalg.eig(alpha)[0])
+    print("spectral radius = {}".format(max(r)))
+    if max(r) > w:
+        raise Exception("spectral radius is greater that w")
 
     if (n * tf) * b < c:
         print("equality constraint can't be attained")
         return np.zeros(n)
 
+    t = np.zeros(n)
+    lb = 0
+    ub = max(np.dot(d, psi_int(0, t0, tf, alpha, w)))
     while abs(sum(t) * b - c) > tol:
         m = (ub + lb) / 2
         for i in range(n):
