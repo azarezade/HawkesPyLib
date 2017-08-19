@@ -13,7 +13,7 @@ import scipy.integrate as integrate
 from event_generation import *
 
 
-def psi(t, alpha, w=1.):
+def psi(t, alpha, w=1.0):
     """
     Consider Hawkes process lambda(t)=mu(t)+int_{-inf}^{t} g(t-s) alpha dN(s),
     the expected intensity is eta(t)=convolve(psi(t), mu(t)).     
@@ -28,7 +28,7 @@ def psi(t, alpha, w=1.):
         return alpha.dot(expm((alpha - w * I) * t))
 
 
-def eval_weighted_activity(t, u, d, t0, tf, alpha, w=1):
+def eval_weighted_activity(t, u, d, t0, tf, alpha, w=1.0):
     """
     Evaluate the following objective function
       d^T eta(tf) = int_0^tf sum_i mu_i(s)*(sum_j psi_ji(tf-s)*d_j) ds
@@ -49,7 +49,7 @@ def eval_weighted_activity(t, u, d, t0, tf, alpha, w=1):
     return integral
 
 
-def maximize_weighted_activity(b, c, d, t0, tf, alpha, w=1, tol=1e-1):
+def maximize_weighted_activity(b, c, d, t0, tf, alpha, w=1.0, tol=1e-1):
     """
     Solve the following optimization:
         maximize    d^T eta(tf)
@@ -60,9 +60,9 @@ def maximize_weighted_activity(b, c, d, t0, tf, alpha, w=1, tol=1e-1):
     """
     n = alpha.shape[0]
 
-    r = np.abs(np.linalg.eig(alpha)[0])
-    print("spectral radius = {}".format(max(r)))
-    if max(r) > w:
+    r = max(np.abs(np.linalg.eig(alpha)[0]))
+    print("spectral radius = {}".format(r))
+    if r > w:
         raise Exception("spectral radius is greater that w")
 
     if (n * tf) * b < c:
@@ -129,9 +129,9 @@ def maximize_int_weighted_activity(b, c, d, t0, tf, alpha, w=1, tol=1e-1):
     """
     n = alpha.shape[0]
 
-    r = np.abs(np.linalg.eig(alpha)[0])
-    print("spectral radius = {}".format(max(r)))
-    if max(r) > w:
+    r = max(np.abs(np.linalg.eig(alpha)[0]))
+    print("spectral radius = {}".format(r))
+    if r > w:
         raise Exception("spectral radius is greater that w")
 
     if (n * tf) * b < c:
@@ -139,7 +139,8 @@ def maximize_int_weighted_activity(b, c, d, t0, tf, alpha, w=1, tol=1e-1):
         return np.zeros(n)
 
     t = np.zeros(n)
-    lb = 0
+    # lb = 0
+    lb = min(np.dot(d, psi_int(tf, t0, tf, alpha, w)))
     ub = max(np.dot(d, psi_int(0, t0, tf, alpha, w)))
     while abs(sum(t) * b - c) > tol:
         m = (ub + lb) / 2
@@ -159,32 +160,35 @@ def maximize_int_weighted_activity(b, c, d, t0, tf, alpha, w=1, tol=1e-1):
 
 
 def main():
-    np.random.seed(100)
+    np.random.seed(10)
     t0 = 0
     tf = 100
     n = 128
     sparsity = 0.1
-    mu_max = 0.01
-    alpha_max = 0.1
-    w = 0.9
+    mu_max = 0.01 / 5
+    alpha_max = 0.1 / 5
+    w = 1
 
     b = 100 * mu_max
-    c = 1 * tf * mu_max
+    c = n * tf * mu_max / 10
     d = np.ones(n)
 
     mu, alpha = generate_model(n, sparsity, mu_max, alpha_max)
 
-    t_star = maximize_weighted_activity(b, c, d, t0, tf, alpha, w)
+    # maximize_weighted_activity(b, c, d, t0, tf, alpha, w)
+
+    maximize_int_weighted_activity(b, c, d, t0, tf, alpha, w)
 
     # tt = np.arange(t0, tf, 1)
     # yy = np.zeros(len(tt))
     # for i in range(n):
     #     for k in range(len(tt)):
-    #         yy[k] = np.dot(d, psi(tf - tt[k], alpha, w)[:, i])
-    #         # yy[k] = psi_int(tt[k], t0, tf, alpha, w)[:, i].dot(d)
+    #         # yy[k] = np.dot(d, psi(tf - tt[k], alpha, w)[:, i])
+    #         yy[k] = psi_int(tt[k], t0, tf, alpha, w)[:, i].dot(d)
     #     plt.plot(tt, yy)
     # plt.show()
 
 
 if __name__ == '__main__':
     main()
+
