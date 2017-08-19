@@ -417,26 +417,26 @@ def max_int_eta_event_num_vs_budget(budget, n, mu, alpha, w, t0, tf, b, d, itr):
 
 
 def main():
-    np.random.seed(10)
+    np.random.seed(100)
     t0 = 0
     tf = 100
-    n = 256
-    sparsity = 0.1 / 2
-    mu_max = 0.01 / 10
-    alpha_max = 0.1 / 10
+    n = 128
+    sparsity = 0.1 / 1
+    mu_max = 0.01 / 5
+    alpha_max = 0.1 / 5
     w = 1
 
     b = 100 * mu_max
-    c = 1 * tf * mu_max
+    c = 2 * tf * mu_max
     d = np.ones(n)
 
     mu, alpha = generate_model(n, sparsity, mu_max, alpha_max)
 
-    max_eta_obj_vs_budget([1*c, 100*c, 200*c, 300*c, 400*c, 500*c], n, mu, alpha, w, t0, tf, b, d)
-    # max_eta_event_num_vs_budget([1*c, 100*c, 200*c, 300*c, 400*c, 500*c], n, mu, alpha, w, t0, tf, b, d, itr=10)
+    max_eta_obj_vs_budget([10*c, 100*c, 200*c, 300*c, 400*c, 500*c], n, mu, alpha, w, t0, tf, b, d)
+    # max_eta_event_num_vs_budget([10*c, 100*c, 200*c, 300*c, 400*c, 500*c], n, mu, alpha, w, t0, tf, b, d, itr=10)
 
-    # max_int_eta_event_num_vs_budget([1*c, 100*c, 200*c, 300*c, 400*c, 500*c], n, mu, alpha, w, t0, tf, b, d, itr=10)
-    # max_int_eta_obj_vs_budget([1*c, 100*c, 200*c, 300*c, 400*c, 500*c], n, mu, alpha, w, t0, tf, b, d)
+    # max_int_eta_event_num_vs_budget([10*c, 100*c, 200*c, 300*c, 400*c, 500*c], n, mu, alpha, w, t0, tf, b, d, itr=10)
+    # max_int_eta_obj_vs_budget([10*c, 100*c, 200*c, 300*c, 400*c, 500*c], n, mu, alpha, w, t0, tf, b, d)
 
 
 if __name__ == '__main__':

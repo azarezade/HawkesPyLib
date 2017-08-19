@@ -70,8 +70,9 @@ def maximize_weighted_activity(b, c, d, t0, tf, alpha, w=1.0, tol=1e-1):
         return np.ones(n) * tf
 
     t = np.zeros(n)
-    lb = 0
-    ub = max(np.dot(d, psi(tf-tf, alpha, w)))
+    # lb = 0
+    lb = min(np.dot(d, psi(tf - t0, alpha, w)))
+    ub = max(np.dot(d, psi(tf - tf, alpha, w)))
     while abs((n * tf - sum(t)) * b - c) > tol:
         m = (ub + lb) / 2
         for i in range(n):
@@ -86,6 +87,7 @@ def maximize_weighted_activity(b, c, d, t0, tf, alpha, w=1.0, tol=1e-1):
             lb = m
         else:
             ub = m
+    return t
 
 
 def psi_int(t, t0, tf, alpha, w=1):
@@ -140,8 +142,8 @@ def maximize_int_weighted_activity(b, c, d, t0, tf, alpha, w=1, tol=1e-1):
 
     t = np.zeros(n)
     # lb = 0
-    lb = min(np.dot(d, psi_int(tf, t0, tf, alpha, w)))
-    ub = max(np.dot(d, psi_int(0, t0, tf, alpha, w)))
+    lb = min(np.dot(d, psi_int(tf - t0, t0, tf, alpha, w)))
+    ub = max(np.dot(d, psi_int(tf - tf, t0, tf, alpha, w)))
     while abs(sum(t) * b - c) > tol:
         m = (ub + lb) / 2
         for i in range(n):
