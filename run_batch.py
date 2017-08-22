@@ -10,6 +10,25 @@ from evaluations import load_mat, eval_weighted_activity, eval_int_weighted_acti
 from event_generation import generate_model, generate_events
 
 
+def u_deg(t, tf, c, deg):
+    return (deg / sum(deg)) * (c / tf)
+
+
+def u_prk(t, tf, c, weight):
+    return (weight / sum(weight)) * (c / tf)
+
+
+def u_uniform(t, tf, c, n):
+    return [c / (tf * n) for k in range(n)]
+
+
+def u_optimal(t, t_optimal, n, b, is_increasing):
+    if is_increasing:
+        return [b * (t > t_optimal[j]) for j in range(n)]
+    else:
+        return [b * (t < t_optimal[j]) for j in range(n)]
+
+
 def count_events(times, a, b):
     k = 0
     for i in range(len(times)):
@@ -187,23 +206,11 @@ def max_eta_obj_vs_budget(budget, n, mu, alpha, w, t0, tf, b, d):
     for i in range(len(budget)):
         c = budget[i]
         t_optimal = maximize_weighted_activity(b, c, d, t0, tf, alpha, w)
-
-        def u_deg(t):
-            return (deg / sum(deg)) * (c / tf)
-
-        def u_prk(t):
-            return (weight / sum(weight)) * (c / tf)
-
-        def u_uniform(t):
-            return [c / (tf * n) for k in range(n)]
-
-        def u_optimal(t):
-            return [b * (t > t_optimal[j]) for j in range(n)]
-
-        obj[0, i] = eval_weighted_activity(tf, u_deg, d, t0, tf, alpha, w)
-        obj[1, i] = eval_weighted_activity(tf, u_prk, d, t0, tf, alpha, w)
-        obj[2, i] = eval_weighted_activity(tf, u_uniform, d, t0, tf, alpha, w)
-        obj[3, i] = eval_weighted_activity(tf, u_optimal, d, t0, tf, alpha, w)
+        obj[0, i] = eval_weighted_activity(tf, lambda t: u_deg(t, tf, c, deg), d, t0, tf, alpha, w)
+        obj[1, i] = eval_weighted_activity(tf, lambda t: u_prk(t, tf, c, weight), d, t0, tf, alpha, w)
+        obj[2, i] = eval_weighted_activity(tf, lambda t: u_uniform(t, tf, c, n), d, t0, tf, alpha, w)
+        obj[3, i] = eval_weighted_activity(tf, lambda t: u_optimal(t, t_optimal, n, b, is_increasing=1),
+                                           d, t0, tf, alpha, w)
     np.savetxt('./results/max_eta_obj_vs_budget.txt', obj)
 
     plt.clf()
@@ -217,38 +224,26 @@ def max_eta_obj_vs_budget(budget, n, mu, alpha, w, t0, tf, b, d):
 
 
 def max_eta_event_num_vs_budget(budget, n, mu, alpha, w, t0, tf, b, d, itr):
+    deg = np.zeros(n)
+    for j in range(n):
+        deg[j] = np.count_nonzero(alpha[j, :])
+
+    graph = nx.from_numpy_matrix(alpha)
+    pr = nx.pagerank(graph)
+    weight = np.asanyarray(list(pr.values()))
+
     event_num = np.zeros([4, len(budget), itr])
     terminal_event_num = np.zeros([4, len(budget), itr])
     for i in range(len(budget)):
         c = budget[i]
-
-        deg = np.zeros(n)
-        for j in range(n):
-            deg[j] = np.count_nonzero(alpha[j, :])
-
-        graph = nx.from_numpy_matrix(alpha)
-        pr = nx.pagerank(graph)
-        weight = np.asanyarray(list(pr.values()))
-
         t_optimal = maximize_weighted_activity(b, c, d, t0, tf, alpha, w)
 
-        def u_deg(t):
-            return (deg / sum(deg)) * (c / tf)
-
-        def u_prk(t):
-            return (weight / sum(weight)) * (c / tf)
-
-        def u_uniform(t):
-            return [c / (tf * n) for k in range(n)]
-
-        def u_optimal(t):
-            return [b * (t > t_optimal[j]) for j in range(n)]
-
         for j in range(itr):
-            times_deg, _ = generate_events(t0, tf, mu, alpha, u_deg)
-            times_prk, _ = generate_events(t0, tf, mu, alpha, u_prk)
-            times_uniform, _ = generate_events(t0, tf, mu, alpha, u_uniform)
-            times_optimal, _ = generate_events(t0, tf, mu, alpha, u_optimal)
+            times_deg, _ = generate_events(t0, tf, mu, alpha, lambda t: u_deg(t, tf, c, deg))
+            times_prk, _ = generate_events(t0, tf, mu, alpha, lambda t: u_prk(t, tf, c, weight))
+            times_uniform, _ = generate_events(t0, tf, mu, alpha, lambda t: u_uniform(t, tf, c, n))
+            times_optimal, _ = generate_events(t0, tf, mu, alpha,
+                                               lambda t: u_optimal(t, t_optimal, n, b, is_increasing=1))
 
             event_num[0, i, j] = len(times_deg)
             event_num[1, i, j] = len(times_prk)
@@ -260,37 +255,27 @@ def max_eta_event_num_vs_budget(budget, n, mu, alpha, w, t0, tf, b, d, itr):
             terminal_event_num[2, i, j] = count_events(times_uniform, tf-1, tf)
             terminal_event_num[3, i, j] = count_events(times_optimal, tf-1, tf)
 
-    # event_num = event_num / itr
-    # terminal_event_num = terminal_event_num / itr
+    with open('./results/max_eta_event_num_vs_budget.pickle', 'wb') as f:
+        pickle.dump([event_num, terminal_event_num], f)
 
     event_num_mean = np.mean(event_num, axis=2)
-    event_num_var = np.var(event_num, axis=2)
-
     terminal_event_num_mean = np.mean(terminal_event_num, axis=2)
-    terminal_event_num_var = np.var(terminal_event_num, axis=2)
-
-    np.savetxt('./results/max_eta_event_num_vs_budget_mean.txt', event_num_mean)
-    np.savetxt('./results/max_eta_event_num_vs_budget_var.txt', event_num_var)
-
-    np.savetxt('./results/max_eta_terminal_event_num_vs_budget_mean.txt', terminal_event_num_mean)
-    np.savetxt('./results/max_eta_terminal_event_num_vs_budget_var.txt', terminal_event_num_var)
-
-    np.save('./results/max_eta_event_num_vs_budget', event_num)
-    np.save('./results/max_eta_terminal_event_num_vs_budget', terminal_event_num)
+    # event_num_var = np.var(event_num, axis=2)
+    # terminal_event_num_var = np.var(terminal_event_num, axis=2)
 
     plt.clf()
-    plt.errorbar(budget, event_num_mean[0, :], event_num_var[0, :], marker='.', label="DEG")
-    plt.errorbar(budget, event_num_mean[1, :], event_num_var[1, :], marker='.', label="PRK")
-    plt.errorbar(budget, event_num_mean[2, :], event_num_var[2, :], marker='.', label="UNF")
-    plt.errorbar(budget, event_num_mean[3, :], event_num_var[3, :], marker='.', label="OPT")
+    plt.plot(budget, event_num_mean[0, :], marker='.', label="DEG")
+    plt.plot(budget, event_num_mean[1, :], marker='.', label="PRK")
+    plt.plot(budget, event_num_mean[2, :], marker='.', label="UNF")
+    plt.plot(budget, event_num_mean[3, :], marker='.', label="OPT")
     plt.legend(loc="lower right")
     plt.savefig('./results/max_eta_event_num_vs_budget.pdf')
 
     plt.clf()
-    plt.errorbar(budget, terminal_event_num_mean[0, :], terminal_event_num_var[0, :], marker='.', label="DEG")
-    plt.errorbar(budget, terminal_event_num_mean[1, :], terminal_event_num_var[1, :], marker='.', label="PRK")
-    plt.errorbar(budget, terminal_event_num_mean[2, :], terminal_event_num_var[2, :], marker='.', label="UNF")
-    plt.errorbar(budget, terminal_event_num_mean[3, :], terminal_event_num_var[3, :], marker='.', label="OPT")
+    plt.plot(budget, terminal_event_num_mean[0, :], marker='.', label="DEG")
+    plt.plot(budget, terminal_event_num_mean[1, :], marker='.', label="PRK")
+    plt.plot(budget, terminal_event_num_mean[2, :], marker='.', label="UNF")
+    plt.plot(budget, terminal_event_num_mean[3, :], marker='.', label="OPT")
     plt.legend(loc="lower right")
     plt.savefig('./results/max_eta_terminal_event_num_vs_budget.pdf')
     return
@@ -309,23 +294,12 @@ def max_int_eta_obj_vs_budget(budget, n, mu, alpha, w, t0, tf, b, d):
     for i in range(len(budget)):
         c = budget[i]
         t_optimal = maximize_int_weighted_activity(b, c, d, t0, tf, alpha, w)
+        obj[0, i] = eval_int_weighted_activity(lambda t: u_deg(t, tf, c, deg), d, t0, tf, alpha, w)
+        obj[1, i] = eval_int_weighted_activity(lambda t: u_prk(t, tf, c, weight), d, t0, tf, alpha, w)
+        obj[2, i] = eval_int_weighted_activity(lambda t: u_uniform(t, tf, c, n), d, t0, tf, alpha, w)
+        obj[3, i] = eval_int_weighted_activity(lambda t: u_optimal(t, t_optimal, n, b, is_increasing=0),
+                                               d, t0, tf, alpha, w)
 
-        def u_deg(t):
-            return (deg / sum(deg)) * (c / tf)
-
-        def u_prk(t):
-            return (weight / sum(weight)) * (c / tf)
-
-        def u_uniform(t):
-            return [c / (tf * n) for k in range(n)]
-
-        def u_optimal(t):
-            return [b * (t < t_optimal[j]) for j in range(n)]
-
-        obj[0, i] = eval_int_weighted_activity(u_deg, d, t0, tf, alpha, w)
-        obj[1, i] = eval_int_weighted_activity(u_prk, d, t0, tf, alpha, w)
-        obj[2, i] = eval_int_weighted_activity(u_uniform, d, t0, tf, alpha, w)
-        obj[3, i] = eval_int_weighted_activity(u_optimal, d, t0, tf, alpha, w)
     np.savetxt('./results/max_int_eta_obj_vs_budget.txt', obj)
 
     plt.clf()
@@ -354,23 +328,12 @@ def max_int_eta_event_num_vs_budget(budget, n, mu, alpha, w, t0, tf, b, d, itr):
 
         t_optimal = maximize_int_weighted_activity(b, c, d, t0, tf, alpha, w)
 
-        def u_deg(t):
-            return (deg / sum(deg)) * (c / tf)
-
-        def u_prk(t):
-            return (weight / sum(weight)) * (c / tf)
-
-        def u_uniform(t):
-            return [c / (tf * n) for k in range(n)]
-
-        def u_optimal(t):
-            return [b * (t < t_optimal[j]) for j in range(n)]
-
         for j in range(itr):
-            times_deg, _ = generate_events(t0, tf, mu, alpha, u_deg)
-            times_prk, _ = generate_events(t0, tf, mu, alpha, u_prk)
-            times_uniform, _ = generate_events(t0, tf, mu, alpha, u_uniform)
-            times_optimal, _ = generate_events(t0, tf, mu, alpha, u_optimal)
+            times_deg, _ = generate_events(t0, tf, mu, alpha, lambda t: u_deg(t, tf, c, deg))
+            times_prk, _ = generate_events(t0, tf, mu, alpha, lambda t: u_prk(t, tf, c, weight))
+            times_uniform, _ = generate_events(t0, tf, mu, alpha, lambda t: u_uniform(t, tf, c, n))
+            times_optimal, _ = generate_events(t0, tf, mu, alpha,
+                                               lambda t: u_optimal(t, t_optimal, n, b, is_increasing=0))
 
             event_num[0, i, j] = len(times_deg)
             event_num[1, i, j] = len(times_prk)
@@ -382,35 +345,27 @@ def max_int_eta_event_num_vs_budget(budget, n, mu, alpha, w, t0, tf, b, d, itr):
             terminal_event_num[2, i, j] = count_events(times_uniform, tf - 1, tf)
             terminal_event_num[3, i, j] = count_events(times_optimal, tf - 1, tf)
 
-    # event_num = event_num / itr
+    with open('./results/max_int_eta_event_num_vs_budget.pickle', 'wb') as f:
+        pickle.dump([event_num, terminal_event_num], f)
+
     event_num_mean = np.mean(event_num, axis=2)
-    event_num_var = np.var(event_num, axis=2)
-
     terminal_event_num_mean = np.mean(terminal_event_num, axis=2)
-    terminal_event_num_var = np.var(terminal_event_num, axis=2)
-
-    np.savetxt('./results/max_int_eta_event_num_vs_budget_mean.txt', event_num_mean)
-    np.savetxt('./results/max_int_eta_event_num_vs_budget_var.txt', event_num_var)
-
-    np.savetxt('./results/max_int_eta_terminal_event_num_vs_budget_mean.txt', terminal_event_num_mean)
-    np.savetxt('./results/max_int_eta_terminal_event_num_vs_budget_var.txt', terminal_event_num_var)
-
-    np.save('./results/max_int_eta_event_num_vs_budget', event_num)
-    np.save('./results/max_int_eta_terminal_event_num_vs_budget', terminal_event_num)
+    # event_num_var = np.var(event_num, axis=2)
+    # terminal_event_num_var = np.var(terminal_event_num, axis=2)
 
     plt.clf()
-    plt.errorbar(budget, event_num_mean[0, :], event_num_var[0, :], marker='.', label="DEG")
-    plt.errorbar(budget, event_num_mean[1, :], event_num_var[1, :], marker='.', label="PRK")
-    plt.errorbar(budget, event_num_mean[2, :], event_num_var[2, :], marker='.', label="UNF")
-    plt.errorbar(budget, event_num_mean[3, :], event_num_var[3, :], marker='.', label="OPT")
+    plt.plot(budget, event_num_mean[0, :], marker='.', label="DEG")
+    plt.plot(budget, event_num_mean[1, :], marker='.', label="PRK")
+    plt.plot(budget, event_num_mean[2, :], marker='.', label="UNF")
+    plt.plot(budget, event_num_mean[3, :], marker='.', label="OPT")
     plt.legend(loc="lower right")
     plt.savefig('./results/max_int_eta_event_num_vs_budget.pdf')
 
     plt.clf()
-    plt.errorbar(budget, terminal_event_num_mean[0, :], terminal_event_num_var[0, :], marker='.', label="DEG")
-    plt.errorbar(budget, terminal_event_num_mean[1, :], terminal_event_num_var[1, :], marker='.', label="PRK")
-    plt.errorbar(budget, terminal_event_num_mean[2, :], terminal_event_num_var[2, :], marker='.', label="UNF")
-    plt.errorbar(budget, terminal_event_num_mean[3, :], terminal_event_num_var[3, :], marker='.', label="OPT")
+    plt.errorbar(budget, terminal_event_num_mean[0, :], marker='.', label="DEG")
+    plt.errorbar(budget, terminal_event_num_mean[1, :], marker='.', label="PRK")
+    plt.errorbar(budget, terminal_event_num_mean[2, :], marker='.', label="UNF")
+    plt.errorbar(budget, terminal_event_num_mean[3, :], marker='.', label="OPT")
     plt.legend(loc="lower right")
     plt.savefig('./results/max_int_eta_terminal_event_num_vs_budget.pdf')
     return
@@ -427,8 +382,6 @@ def mehrdad_eval(data_path, itr=30):
     mu = data['mu'][:, 0]
     alpha = data['alpha']
     lambda_cam = data['lambda_cam']
-    print(' ')
-    print(' ')
 
     obj = np.zeros(budget.shape[0])
     event_num = np.zeros([len(budget), itr])
@@ -452,29 +405,31 @@ def mehrdad_eval(data_path, itr=30):
 
 
 def main():
-    np.random.seed(4)
+    np.random.seed(10)
     t0 = 0
     tf = 100
-    n = 16
-    sparsity = 0.25
+    n = 8
+    sparsity = 0.3
     mu_max = 0.01
     alpha_max = 0.1
-    w = 2
+    w = 1
 
     b = 100 * mu_max
     c = 1 * tf * mu_max
     d = np.ones(n)
+    budgets = c * np.array([200])
+    itr = 1
 
-    # mu, alpha = generate_model(n, sparsity, mu_max, alpha_max)
+    mu, alpha = generate_model(n, sparsity, mu_max, alpha_max)
 
-    mehrdad_eval('./data/mehrdad-64.mat')
+    # mehrdad_eval('./data/mehrdad-64.mat')
 
-    # max_eta_obj_vs_budget([100*c, 200*c, 300*c, 400*c, 500*c], n, mu, alpha, w, t0, tf, b, d)
-    # max_eta_event_num_vs_budget([100*c, 200*c, 300*c, 400*c, 500*c], n, mu, alpha, w, t0, tf, b, d, itr=20)
-
-    # max_int_eta_event_num_vs_budget([100*c, 200*c, 300*c, 400*c, 500*c], n, mu, alpha, w, t0, tf, b, d, itr=20)
-    # max_int_eta_obj_vs_budget([100*c, 200*c, 300*c, 400*c, 500*c], n, mu, alpha, w, t0, tf, b, d)
-
+    # max_eta_obj_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, d)
+    # max_int_eta_obj_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, d)
+    # max_eta_event_num_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, d, itr)
+    max_int_eta_event_num_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, d, itr)
 
 if __name__ == '__main__':
     main()
+
+# TODO: Next: use savemat besides the pickle

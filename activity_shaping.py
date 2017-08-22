@@ -129,6 +129,7 @@ def maximize_int_weighted_activity(b, c, d, t0, tf, alpha, w=1, tol=1e-1):
     where
         tol (float): tolerance for attaining the b*sum(t)=c constraint
     """
+    # TODO: sometimes it dosent converges, check it!
     n = alpha.shape[0]
 
     r = max(np.abs(np.linalg.eig(alpha)[0]))
@@ -141,7 +142,7 @@ def maximize_int_weighted_activity(b, c, d, t0, tf, alpha, w=1, tol=1e-1):
         return np.zeros(n)
 
     if c < b * tf:
-        raise Exception("the algorithm may not converge, c={} < b*tf={}".format(c, b * tf))
+        print("the algorithm may not converge, c={} < b*tf={}".format(c, b * tf))
 
     t = np.zeros(n)
     # lb = 0
@@ -157,6 +158,11 @@ def maximize_int_weighted_activity(b, c, d, t0, tf, alpha, w=1, tol=1e-1):
                 k = i
         print("ub={:.4f} \t lb={:.4f} \t t_star={} precision={} diff={}".
               format(ub, lb, [int(i) for i in t], psi_int(t[k], t0, tf, alpha, w)[:, k].dot(d) - m, sum(t) * b - c))
+        if ub - lb < 1e-4:
+            if sum(t) * b - c < 0:
+                return t
+            else:
+                raise Exception("not converged ub={}, lb={}".format(ub, lb))
         if sum(t) * b > c:
             lb = m
         else:
@@ -165,33 +171,34 @@ def maximize_int_weighted_activity(b, c, d, t0, tf, alpha, w=1, tol=1e-1):
 
 
 def main():
-    np.random.seed(4)
+    np.random.seed(0)
     t0 = 0
     tf = 100
-    n = 64
+    n = 8
     sparsity = 0.3
     mu_max = 0.01
     alpha_max = 0.1
     w = 1
+
     b = 100 * mu_max
     c = 1 * tf * mu_max
     d = np.ones(n)
 
     mu, alpha = generate_model(n, sparsity, mu_max, alpha_max)
-    sio.savemat('./data/pydata-64.mat', {'T': tf, 'N': n, 'w': w, 'mu': mu, 'alpha': alpha, 'c': d, 'C': c / tf})
+    # sio.savemat('./data/pydata-64.mat', {'T': tf, 'N': n, 'w': w, 'mu': mu, 'alpha': alpha, 'c': d, 'C': c / tf})
 
     # maximize_weighted_activity(b, c, d, t0, tf, alpha, w)
 
     # maximize_int_weighted_activity(b, c, d, t0, tf, alpha, w)
 
-    # tt = np.arange(t0, tf, 1)
-    # yy = np.zeros(len(tt))
-    # for i in range(n):
-    #     for k in range(len(tt)):
-    #         # yy[k] = np.dot(d, psi(tf - tt[k], alpha, w)[:, i])
-    #         yy[k] = psi_int(tt[k], t0, tf, alpha, w)[:, i].dot(d)
-    #     plt.plot(tt, yy)
-    # plt.show()
+    tt = np.arange(t0, tf, 1)
+    yy = np.zeros(len(tt))
+    for i in range(n):
+        for k in range(len(tt)):
+            # yy[k] = np.dot(d, psi(tf - tt[k], alpha, w)[:, i])
+            yy[k] = psi_int(tt[k], t0, tf, alpha, w)[:, i].dot(d)
+        plt.plot(tt, yy)
+    plt.show()
 
 
 if __name__ == '__main__':
