@@ -353,7 +353,7 @@ def max_int_eta_event_num_vs_budget(budget, n, mu, alpha, w, t0, tf, b, d, itr):
         weight = np.asanyarray(list(pr.values()))
 
         t_optimal = maximize_int_weighted_activity(b, c, d, t0, tf, alpha, w)
-        print('asghar')
+
         def u_deg(t):
             return (deg / sum(deg)) * (c / tf)
 
