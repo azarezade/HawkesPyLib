@@ -405,10 +405,10 @@ def mehrdad_eval(data_path, itr=30):
 
 
 def main():
-    np.random.seed(10)
+    # np.random.seed(1000)
     t0 = 0
     tf = 100
-    n = 8
+    n = 64
     sparsity = 0.3
     mu_max = 0.01
     alpha_max = 0.1
@@ -417,7 +417,7 @@ def main():
     b = 100 * mu_max
     c = 1 * tf * mu_max
     d = np.ones(n)
-    budgets = c * np.array([200])
+    budgets = c * np.array([200, 300])
     itr = 1
 
     mu, alpha = generate_model(n, sparsity, mu_max, alpha_max)

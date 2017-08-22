@@ -158,15 +158,16 @@ def maximize_int_weighted_activity(b, c, d, t0, tf, alpha, w=1, tol=1e-1):
                 k = i
         print("ub={:.4f} \t lb={:.4f} \t t_star={} precision={} diff={}".
               format(ub, lb, [int(i) for i in t], psi_int(t[k], t0, tf, alpha, w)[:, k].dot(d) - m, sum(t) * b - c))
-        if ub - lb < 1e-4:
-            if sum(t) * b - c < 0:
-                return t
-            else:
-                raise Exception("not converged ub={}, lb={}".format(ub, lb))
         if sum(t) * b > c:
             lb = m
         else:
             ub = m
+        # TODO: the following stopping cond is add-hoc, change it!
+        if ub - lb < 1e-4:
+            if sum(t) * b - c < 0.1 * c:
+                return t
+            else:
+                raise Exception("not converged ub={}, lb={}".format(ub, lb))
     return t
 
 
@@ -174,7 +175,7 @@ def main():
     np.random.seed(0)
     t0 = 0
     tf = 100
-    n = 8
+    n = 16
     sparsity = 0.3
     mu_max = 0.01
     alpha_max = 0.1
