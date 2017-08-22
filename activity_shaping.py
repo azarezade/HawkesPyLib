@@ -63,7 +63,7 @@ def maximize_weighted_activity(b, c, d, t0, tf, alpha, w=1.0, tol=1e-1):
     r = max(np.abs(np.linalg.eig(alpha)[0]))
     print("spectral radius = {}".format(r))
     if r > w:
-        raise Exception("spectral radius is greater that w")
+        raise Exception("spectral radius r={} is greater that w={}".format(r, w))
 
     if (n * tf) * b < c:
         print("equality constraint can't be attained")
@@ -134,16 +134,19 @@ def maximize_int_weighted_activity(b, c, d, t0, tf, alpha, w=1, tol=1e-1):
     r = max(np.abs(np.linalg.eig(alpha)[0]))
     print("spectral radius = {}".format(r))
     if r > w:
-        raise Exception("spectral radius is greater that w")
+        raise Exception("spectral radius r={} is greater that w={}".format(r, w))
 
     if (n * tf) * b < c:
         print("equality constraint can't be attained")
         return np.zeros(n)
 
+    if c < b * tf:
+        raise Exception("the algorithm may not converge, c={} < b*tf={}".format(c, b * tf))
+
     t = np.zeros(n)
     # lb = 0
-    lb = min(np.dot(d, psi_int(tf - t0, t0, tf, alpha, w)))
-    ub = max(np.dot(d, psi_int(tf - tf, t0, tf, alpha, w)))
+    lb = min(np.dot(d, psi_int(tf, t0, tf, alpha, w)))
+    ub = max(np.dot(d, psi_int(t0, t0, tf, alpha, w)))
     while abs(sum(t) * b - c) > tol:
         m = (ub + lb) / 2
         for i in range(n):
@@ -162,24 +165,24 @@ def maximize_int_weighted_activity(b, c, d, t0, tf, alpha, w=1, tol=1e-1):
 
 
 def main():
-    np.random.seed(10)
+    np.random.seed(4)
     t0 = 0
     tf = 100
-    n = 128
-    sparsity = 0.1
-    mu_max = 0.01 / 5
-    alpha_max = 0.1 / 5
+    n = 64
+    sparsity = 0.3
+    mu_max = 0.01
+    alpha_max = 0.1
     w = 1
-
     b = 100 * mu_max
-    c = n * tf * mu_max / 10
+    c = 1 * tf * mu_max
     d = np.ones(n)
 
     mu, alpha = generate_model(n, sparsity, mu_max, alpha_max)
+    sio.savemat('./data/pydata-64.mat', {'T': tf, 'N': n, 'w': w, 'mu': mu, 'alpha': alpha, 'c': d, 'C': c / tf})
 
     # maximize_weighted_activity(b, c, d, t0, tf, alpha, w)
 
-    maximize_int_weighted_activity(b, c, d, t0, tf, alpha, w)
+    # maximize_int_weighted_activity(b, c, d, t0, tf, alpha, w)
 
     # tt = np.arange(t0, tf, 1)
     # yy = np.zeros(len(tt))

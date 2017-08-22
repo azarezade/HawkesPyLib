@@ -3,6 +3,7 @@ import numpy as np
 import networkx as nx
 import matplotlib as mpl; mpl.use('Agg')
 import matplotlib.pyplot as plt
+import scipy.io as sio
 
 from activity_shaping import maximize_weighted_activity, maximize_int_weighted_activity
 from evaluations import load_mat, eval_weighted_activity, eval_int_weighted_activity
@@ -412,31 +413,67 @@ def max_int_eta_event_num_vs_budget(budget, n, mu, alpha, w, t0, tf, b, d, itr):
     plt.errorbar(budget, terminal_event_num_mean[3, :], terminal_event_num_var[3, :], marker='.', label="OPT")
     plt.legend(loc="lower right")
     plt.savefig('./results/max_int_eta_terminal_event_num_vs_budget.pdf')
+    return
 
+
+def mehrdad_eval(data_path, itr=30):
+    data = sio.loadmat(data_path)
+    # sio.savemat('./data/pydata-64.mat', {'T': tf, 'N': n, 'w': w, 'mu': mu, 'alpha': alpha, 'c': d, 'C': c / tf})
+    # save('mehrdad-64.mat', 't0', 'tf', 'w', 'n', 'mu', 'alpha', 'c', 'd', 'lambda_cam')
+    t0 = data['t0'][0][0]
+    tf = data['tf'][0][0]
+    n = data['n'][0][0]
+    w = data['w'][0][0]
+    d = data['d'][:, 0]
+    budget = data['budget'][:, 0]
+    mu = data['mu'][:, 0]
+    alpha = data['alpha']
+    lambda_cam = data['lambda_cam']
+
+    obj = np.zeros(budget.shape[0])
+    event_num = np.zeros([len(budget), itr])
+    terminal_event_num = np.zeros([len(budget), itr])
+
+    for i in range(budget.shape[0]):
+        def u_mehrdad(t):
+            return [lambda_cam[i, j] for j in range(n)]
+        obj[i] = eval_weighted_activity(tf, u_mehrdad, d, t0, tf, alpha, w)
+        for j in range(itr):
+            times_mehrdad, _ = generate_events(t0, tf, mu, alpha, u_mehrdad)
+            event_num[i, j] = len(times_mehrdad)
+            terminal_event_num[i, j] = count_events(times_mehrdad, tf - 1, tf)
+
+    np.savetxt('./results/max_eta_event_num_vs_budget_mehrdad_mean.txt', np.mean(event_num, 1))
+    np.savetxt('./results/max_eta_event_num_vs_budget_mehrdad_var.txt', np.var(event_num, 1))
+    np.savetxt('./results/max_eta_terminal_event_num_vs_budget_mehrdad_mean.txt', np.mean(terminal_event_num, 1))
+    np.savetxt('./results/max_eta_terminal_event_num_vs_budget_mehrdad_var.txt', np.mean(terminal_event_num, 1))
+    np.savetxt('./results/max_eta_obj_vs_budget_mehrdad.txt', obj)
     return
 
 
 def main():
-    np.random.seed(100)
+    np.random.seed(4)
     t0 = 0
     tf = 100
-    n = 128
-    sparsity = 0.1 / 1
-    mu_max = 0.01 / 5
-    alpha_max = 0.1 / 5
-    w = 1
+    n = 16
+    sparsity = 0.25
+    mu_max = 0.01
+    alpha_max = 0.1
+    w = 2
 
     b = 100 * mu_max
-    c = 2 * tf * mu_max
+    c = 1 * tf * mu_max
     d = np.ones(n)
 
-    mu, alpha = generate_model(n, sparsity, mu_max, alpha_max)
+    # mu, alpha = generate_model(n, sparsity, mu_max, alpha_max)
 
-    max_eta_obj_vs_budget([10*c, 100*c, 200*c, 300*c, 400*c, 500*c], n, mu, alpha, w, t0, tf, b, d)
-    # max_eta_event_num_vs_budget([10*c, 100*c, 200*c, 300*c, 400*c, 500*c], n, mu, alpha, w, t0, tf, b, d, itr=10)
+    mehrdad_eval('./data/mehrdad-64.mat')
 
-    # max_int_eta_event_num_vs_budget([10*c, 100*c, 200*c, 300*c, 400*c, 500*c], n, mu, alpha, w, t0, tf, b, d, itr=10)
-    # max_int_eta_obj_vs_budget([10*c, 100*c, 200*c, 300*c, 400*c, 500*c], n, mu, alpha, w, t0, tf, b, d)
+    # max_eta_obj_vs_budget([100*c, 200*c, 300*c, 400*c, 500*c], n, mu, alpha, w, t0, tf, b, d)
+    # max_eta_event_num_vs_budget([100*c, 200*c, 300*c, 400*c, 500*c], n, mu, alpha, w, t0, tf, b, d, itr=20)
+
+    # max_int_eta_event_num_vs_budget([100*c, 200*c, 300*c, 400*c, 500*c], n, mu, alpha, w, t0, tf, b, d, itr=20)
+    # max_int_eta_obj_vs_budget([100*c, 200*c, 300*c, 400*c, 500*c], n, mu, alpha, w, t0, tf, b, d)
 
 
 if __name__ == '__main__':
