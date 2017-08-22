@@ -418,8 +418,6 @@ def max_int_eta_event_num_vs_budget(budget, n, mu, alpha, w, t0, tf, b, d, itr):
 
 def mehrdad_eval(data_path, itr=30):
     data = sio.loadmat(data_path)
-    # sio.savemat('./data/pydata-64.mat', {'T': tf, 'N': n, 'w': w, 'mu': mu, 'alpha': alpha, 'c': d, 'C': c / tf})
-    # save('mehrdad-64.mat', 't0', 'tf', 'w', 'n', 'mu', 'alpha', 'c', 'd', 'lambda_cam')
     t0 = data['t0'][0][0]
     tf = data['tf'][0][0]
     n = data['n'][0][0]
