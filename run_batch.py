@@ -427,6 +427,7 @@ def mehrdad_eval(data_path, itr=30):
     mu = data['mu'][:, 0]
     alpha = data['alpha']
     lambda_cam = data['lambda_cam']
+    print(' ')
 
     obj = np.zeros(budget.shape[0])
     event_num = np.zeros([len(budget), itr])
