@@ -163,7 +163,7 @@ def maximize_int_weighted_activity(b, c, d, t0, tf, alpha, w=1, tol=1e-1):
         else:
             ub = m
         # TODO: the following stopping cond is add-hoc, change it!
-        if ub - lb < 1e-4:
+        if ub - lb < 1e-5:
             if sum(t) * b - c < 0.1 * c:
                 return t
             else:
