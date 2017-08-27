@@ -5,8 +5,7 @@ import matplotlib as mpl; mpl.use('Agg')
 import matplotlib.pyplot as plt
 import scipy.io as sio
 
-from activity_shaping import maximize_weighted_activity, maximize_int_weighted_activity
-from evaluations import eval_weighted_activity, eval_int_weighted_activity
+from activity_shaping import maximize_weighted_activity, maximize_int_weighted_activity, eval_weighted_activity, eval_int_weighted_activity
 from event_generation import generate_model, generate_events
 
 
