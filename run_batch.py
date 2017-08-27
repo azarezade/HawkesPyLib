@@ -194,7 +194,7 @@ def count_events(times, a, b):
 #     return
 
 
-def max_obj_vs_budget(budget, n, mu, alpha, w, t0, tf, b, d):
+def obj_vs_budget(budget, n, mu, alpha, w, t0, tf, b, d):
     deg = np.zeros(n)
     for i in range(n):
         deg[i] = np.count_nonzero(alpha[i, :])
@@ -221,19 +221,19 @@ def max_obj_vs_budget(budget, n, mu, alpha, w, t0, tf, b, d):
     plt.plot(budget, obj[3, :], label="OPT")
     plt.plot(budget, obj[4, :], label="UNC")
     plt.legend(loc="upper left")
-    plt.savefig('./results/max_obj_vs_budget.pdf')
+    plt.savefig('./results/obj_vs_budget.pdf')
 
-    with open('./results/max_obj_vs_budget.pickle', 'wb') as f:
+    with open('./results/obj_vs_budget.pickle', 'wb') as f:
         pickle.dump([obj, t_optimal, deg, weight,
                      budget, n, mu, alpha, w, t0, tf, b, d, RND_SEED], f)
 
-    sio.savemat('./results/max_obj_vs_budget.mat',
+    sio.savemat('./results/obj_vs_budget.mat',
                 {'obj': obj, 't_optimal': t_optimal, 'deg': deg, 'weight': weight,
                  'budget': budget, 'n': n, 'mu': mu, 'alpha': alpha, 'w': w, 't0': t0, 'tf': tf, 'b': b, 'd': d, 'seed': RND_SEED})
     return
 
 
-def max_int_obj_vs_budget(budget, n, mu, alpha, w, t0, tf, b, d):
+def int_obj_vs_budget(budget, n, mu, alpha, w, t0, tf, b, d):
     deg = np.zeros(n)
     for i in range(n):
         deg[i] = np.count_nonzero(alpha[i, :])
@@ -260,19 +260,19 @@ def max_int_obj_vs_budget(budget, n, mu, alpha, w, t0, tf, b, d):
     plt.plot(budget, obj[3, :], label="OPT")
     plt.plot(budget, obj[4, :], label="OPT")
     plt.legend(loc="upper left")
-    plt.savefig('./results/max_int_obj_vs_budget.pdf')
+    plt.savefig('./results/int_obj_vs_budget.pdf')
 
-    with open('./results/max_int_obj_vs_budget.pickle', 'wb') as f:
+    with open('./results/int_obj_vs_budget.pickle', 'wb') as f:
         pickle.dump([obj, t_optimal, deg, weight,
                      budget, n, mu, alpha, w, t0, tf, b, d, RND_SEED], f)
 
-    sio.savemat('./results/max_int_obj_vs_budget.mat',
+    sio.savemat('./results/int_obj_vs_budget.mat',
                 {'obj': obj, 't_optimal': t_optimal, 'deg': deg, 'weight': weight,
                  'budget': budget, 'n': n, 'mu': mu, 'alpha': alpha, 'w': w, 't0': t0, 'tf': tf, 'b': b, 'd': d, 'seed': RND_SEED})
     return
 
 
-def max_events_vs_budget(budget, n, mu, alpha, w, t0, tf, b, d, itr):
+def events_vs_budget(budget, n, mu, alpha, w, t0, tf, b, d, itr):
     deg = np.zeros(n)
     for j in range(n):
         deg[j] = np.count_nonzero(alpha[j, :])
@@ -319,17 +319,17 @@ def max_events_vs_budget(budget, n, mu, alpha, w, t0, tf, b, d, itr):
     plt.legend(loc="lower right")
     plt.savefig('./results/max_terminal_events_vs_budget.pdf')
 
-    with open('./results/max_events_vs_budget.pickle', 'wb') as f:
+    with open('./results/events_vs_budget.pickle', 'wb') as f:
         pickle.dump([event_num, terminal_event_num, t_optimal, deg, weight,
                      budget, n, mu, alpha, w, t0, tf, b, d, itr, RND_SEED], f)
 
-    sio.savemat('./results/max_events_vs_budget.mat',
+    sio.savemat('./results/events_vs_budget.mat',
                 {'event_num': event_num, 'terminal_event_num': terminal_event_num, 't_optimal': t_optimal, 'deg': deg, 'weight': weight,
                  'budget': budget, 'n': n, 'mu': mu, 'alpha': alpha, 'w': w, 't0': t0, 'tf': tf, 'b': b, 'd': d, 'seed': RND_SEED})
     return
 
 
-def max_int_events_vs_budget(budget, n, mu, alpha, w, t0, tf, b, d, itr):
+def int_events_vs_budget(budget, n, mu, alpha, w, t0, tf, b, d, itr):
     deg = np.zeros(n)
     for j in range(n):
         deg[j] = np.count_nonzero(alpha[j, :])
@@ -376,11 +376,11 @@ def max_int_events_vs_budget(budget, n, mu, alpha, w, t0, tf, b, d, itr):
     plt.legend(loc="lower right")
     plt.savefig('./results/max_int_total_events_vs_budget.pdf')
 
-    with open('./results/max_int_events_vs_budget.pickle', 'wb') as f:
+    with open('./results/int_events_vs_budget.pickle', 'wb') as f:
         pickle.dump([event_num, terminal_event_num, t_optimal, deg, weight,
                      budget, n, mu, alpha, w, t0, tf, b, d, itr, RND_SEED], f)
 
-    sio.savemat('./results/max_int_events_vs_budget.mat',
+    sio.savemat('./results/int_events_vs_budget.mat',
                 {'event_num': event_num, 'terminal_event_num': terminal_event_num, 't_optimal': t_optimal, 'deg': deg, 'weight': weight,
                  'budget': budget, 'n': n, 'mu': mu, 'alpha': alpha, 'w': w, 't0': t0, 'tf': tf, 'b': b, 'd': d, 'seed': RND_SEED})
     return
@@ -411,10 +411,10 @@ def mehrdad_eval(data_path, itr=30):
             event_num[i, j] = len(times_mehrdad)
             terminal_event_num[i, j] = count_events(times_mehrdad, tf - 1, tf)
 
-    with open('./results/max_events_obj_vs_budget_mehrdad.pickle', 'wb') as f:
+    with open('./results/events_obj_vs_budget_mehrdad.pickle', 'wb') as f:
         pickle.dump([obj, event_num, terminal_event_num, budget, n, mu, alpha, w, t0, tf, d, itr, RND_SEED], f)
 
-    sio.savemat('./results/max_events_obj_vs_budget_mehrdad.mat',
+    sio.savemat('./results/events_obj_vs_budget_mehrdad.mat',
                 {'obj': obj, 'event_num': event_num, 'terminal_event_num': terminal_event_num,
                  'budget': budget, 'n': n, 'mu': mu, 'alpha': alpha, 'w': w, 't0': t0, 'tf': tf, 'd': d, 'seed': RND_SEED})
     return
@@ -440,10 +440,10 @@ def main():
 
     # mehrdad_eval('./data/mehrdad-64.mat')
 
-    max_obj_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, d)
-    max_int_obj_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, d)
-    max_events_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, d, itr)
-    max_int_events_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, d, itr)
+    obj_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, d)
+    int_obj_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, d)
+    events_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, d, itr)
+    int_events_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, d, itr)
 
 if __name__ == '__main__':
     RND_SEED = 10
