@@ -38,160 +38,31 @@ def count_events(times, a, b):
     return k
 
 
-# def max_eta_obj_vs_bound(bn, path):
-#     t0, tf, n, w, mu, alpha, c, d, lambda_cam = load_mat(path)
-#
-#     deg = np.zeros(n)
-#     for i in range(n):
-#         deg[i] = np.count_nonzero(alpha[i, :])
-#
-#     graph = nx.from_numpy_matrix(alpha)
-#     pr = nx.pagerank(graph)
-#     weight = np.asanyarray(list(pr.values()))
-#
-#     def u_mehrdad(t):
-#         return [lambda_cam[j] for j in range(n)]
-#
-#     def u_deg(t):
-#         return (deg / sum(deg)) * (c / tf)
-#
-#     def u_prk(t):
-#         return (weight / sum(weight)) * (c / tf)
-#
-#     def u_uniform(t):
-#         return [c / (tf * n) for j in range(n)]
-#
-#     obj_deg = []
-#     obj_prk = []
-#     obj_uniform = []
-#     obj_mehrdad = []
-#     obj_optimal = []
-#     for b in range(1, bn, 2):
-#         t_optimal = maximize_weighted_activity(b*max(lambda_cam), c, d, t0, tf, alpha)
-#
-#         def u_optimal(t):
-#             return [b * (t > t_optimal[j]) for j in range(n)]
-#
-#         obj_optimal.append(eval_weighted_activity(tf, u_optimal, d, t0, tf, alpha, w))
-#
-#     obj_deg.append(eval_weighted_activity(tf, u_deg, d, t0, tf, alpha, w))
-#     obj_prk.append(eval_weighted_activity(tf, u_prk, d, t0, tf, alpha, w))
-#     obj_uniform.append(eval_weighted_activity(tf, u_uniform, d, t0, tf, alpha, w))
-#     obj_mehrdad.append(eval_weighted_activity(tf, u_mehrdad, d, t0, tf, alpha, w))
-#
-#     with open('./results/max_obj.pickle', 'wb') as f:
-#         pickle.dump([obj_deg, obj_prk, obj_uniform, obj_mehrdad, obj_optimal], f)
-#
-#     x = np.arange(1, bn, 2)
-#     plt.plot(x, obj_uniform, label="UNF")
-#     plt.plot(x, obj_deg, label="DEG")
-#     plt.plot(x, obj_prk, label="PRK")
-#     plt.plot(x, obj_mehrdad, label="MHD")
-#     plt.plot(x, obj_optimal, label="OPT")
-#     plt.legend(loc="upper left")
-#     plt.savefig('./results/max_eta_obj.pdf')
-#
-#     return
+def events_vs_time(c, n, mu, alpha, w, t0, tf, b, d):
+    deg = np.zeros(n)
+    for j in range(n):
+        deg[j] = np.count_nonzero(alpha[j, :])
 
+    graph = nx.from_numpy_matrix(alpha)
+    pr = nx.pagerank(graph)
+    weight = np.asanyarray(list(pr.values()))
 
-# def max_eta_obj_vs_time(tfs, n, t0, sparsity, mu_max, alpha_max, w, b, d):
-#     c = tfs[round(len(tfs)/2)] * mu_max
-#
-#     mu, alpha = generate_model(n, sparsity, mu_max, alpha_max)
-#
-#     obj = np.zeros((4, len(tfs)))
-#     for i in range(len(tfs)):
-#         tf = tfs[i]
-#
-#         deg = np.zeros(n)
-#         for j in range(n):
-#             deg[j] = np.count_nonzero(alpha[j, :])
-#
-#         graph = nx.from_numpy_matrix(alpha)
-#         pr = nx.pagerank(graph)
-#         weight = np.asanyarray(list(pr.values()))
-#
-#         t_optimal = maximize_weighted_activity(b, c, d, t0, tf, alpha)
-#
-#         def u_deg(t):
-#             return (deg / sum(deg)) * (c / tf)
-#
-#         def u_prk(t):
-#             return (weight / sum(weight)) * (c / tf)
-#
-#         def u_uniform(t):
-#             return [c / (tf * n) for j in range(n)]
-#
-#         def u_optimal(t):
-#             return [b * (t > t_optimal[j]) for j in range(n)]
-#
-#         obj[0, i] = eval_weighted_activity(tf, u_deg, d, t0, tf, alpha, w)
-#         obj[1, i] = eval_weighted_activity(tf, u_prk, d, t0, tf, alpha, w)
-#         obj[2, i] = eval_weighted_activity(tf, u_uniform, d, t0, tf, alpha, w)
-#         obj[3, i] = eval_weighted_activity(tf, u_optimal, d, t0, tf, alpha, w)
-#     np.savetxt('./results/max_eta_obj_vs_time,txt', obj)
-#
-#     plt.plot(tfs, obj[0, :], label="DEG")
-#     plt.plot(tfs, obj[1, :], label="PRK")
-#     plt.plot(tfs, obj[2, :], label="UNF")
-#     plt.plot(tfs, obj[3, :], label="OPT")
-#     plt.legend(loc="upper left")
-#     plt.savefig('./results/max_eta_obj_vs_time.pdf')
-#     return
+    t_optimal = maximize_weighted_activity(b, c, d, t0, tf, alpha, w)
 
+    times_deg, _ = generate_events(t0, tf, mu, alpha, lambda t: u_deg(t, tf, c, deg))
+    times_prk, _ = generate_events(t0, tf, mu, alpha, lambda t: u_prk(t, tf, c, weight))
+    times_uniform, _ = generate_events(t0, tf, mu, alpha, lambda t: u_uniform(t, tf, c, n))
+    times_optimal, _ = generate_events(t0, tf, mu, alpha, lambda t: u_optimal_inc(t, t_optimal, n, b))
+    times_unc, _ = generate_events(t0, tf, mu, alpha)
 
-# def max_eta_event_num_vs_time(tfs, n, t0, sparsity, mu_max, alpha_max, w, b, d):
-#     c = tfs[round(len(tfs)/2)] * mu_max
-#
-#     mu, alpha = generate_model(n, sparsity, mu_max, alpha_max)
-#
-#     event_num = np.zeros((4, len(tfs)))
-#     for i in range(len(tfs)):
-#         tf = tfs[i]
-#
-#         deg = np.zeros(n)
-#         for j in range(n):
-#             deg[j] = np.count_nonzero(alpha[j, :])
-#
-#         graph = nx.from_numpy_matrix(alpha)
-#         pr = nx.pagerank(graph)
-#         weight = np.asanyarray(list(pr.values()))
-#
-#         t_optimal = maximize_weighted_activity(b, c, d, t0, tf, alpha)
-#
-#         def u_deg(t):
-#             return (deg / sum(deg)) * (c / tf)
-#
-#         def u_prk(t):
-#             return (weight / sum(weight)) * (c / tf)
-#
-#         def u_uniform(t):
-#             return [c / (tf * n) for j in range(n)]
-#
-#         def u_optimal(t):
-#             return [b * (t > t_optimal[j]) for j in range(n)]
-#
-#         for j in range(50):
-#             times_deg, _ = generate_events(t0, tf, mu, alpha, u_deg)
-#             times_prk, _ = generate_events(t0, tf, mu, alpha, u_prk)
-#             times_uniform, _ = generate_events(t0, tf, mu, alpha, u_uniform)
-#             times_optimal, _ = generate_events(t0, tf, mu, alpha, u_optimal)
-#
-#             event_num[0, i] += count_events(times_deg, tf-1, tf)
-#             event_num[1, i] += count_events(times_prk, tf-1, tf)
-#             event_num[2, i] += count_events(times_uniform, tf-1, tf)
-#             event_num[3, i] += count_events(times_optimal, tf-1, tf)
-#
-#     event_num = event_num / 50
-#     np.savetxt('./results/max_eta_event_num_vs_time.txt', event_num)
-#
-#     plt.plot(tfs, event_num[0, :], label="DEG")
-#     plt.plot(tfs, event_num[1, :], label="PRK")
-#     plt.plot(tfs, event_num[2, :], label="UNF")
-#     plt.plot(tfs, event_num[3, :], label="OPT")
-#     plt.legend(loc="upper left")
-#     plt.savefig('./results/max_eta_event_num_vs_time.pdf')
-#     return
+    with open('./results/events_vs_time.pickle', 'wb') as f:
+        pickle.dump([times_deg, times_prk, times_uniform, times_optimal, times_unc,
+                     c, n, mu, alpha, w, t0, tf, b, d, RND_SEED], f)
+
+    sio.savemat('./results/events_vs_time.mat',
+                {'times_deg': times_deg, 'times_prk': times_prk, 'times_uniform': times_uniform, 'times_optimal': times_optimal, 'times_unc': times_unc,
+                 'c': c, 'n': n, 'mu': mu, 'alpha': alpha, 'w': w, 't0': t0, 'tf': tf, 'b': b, 'd': d, 'seed': RND_SEED})
+    return
 
 
 def obj_vs_budget(budget, n, mu, alpha, w, t0, tf, b, d):
@@ -440,10 +311,12 @@ def main():
 
     # mehrdad_eval('./data/mehrdad-64.mat')
 
-    obj_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, d)
-    int_obj_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, d)
-    events_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, d, itr)
-    int_events_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, d, itr)
+    events_vs_time(c*10, n, mu, alpha, w, t0, tf, b, d)
+
+    # obj_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, d)
+    # int_obj_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, d)
+    # events_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, d, itr)
+    # int_events_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, d, itr)
 
 if __name__ == '__main__':
     RND_SEED = 10
