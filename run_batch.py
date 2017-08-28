@@ -5,7 +5,7 @@ import matplotlib as mpl; mpl.use('Agg')
 import matplotlib.pyplot as plt
 import scipy.io as sio
 
-from activity_shaping import maximize_weighted_activity, maximize_int_weighted_activity, eval_weighted_activity, eval_int_weighted_activity
+from activity_maximization import maximize_weighted_activity, maximize_int_weighted_activity, eval_weighted_activity, eval_int_weighted_activity
 from event_generation import generate_model, generate_events
 
 
@@ -17,16 +17,16 @@ def u_prk(t, tf, c, weight):
     return (weight / sum(weight)) * (c / tf)
 
 
-def u_uniform(t, tf, c, n):
+def u_unf(t, tf, c, n):
     return [c / (tf * n) for k in range(n)]
 
 
-def u_optimal_dec(t, t_optimal, n, b):
-    return [b * (t < t_optimal[j]) for j in range(n)]
+def u_opt_dec(t, t_opt, n, b):
+    return [b * (t < t_opt[j]) for j in range(n)]
 
 
-def u_optimal_inc(t, t_optimal, n, b):
-    return [b * (t > t_optimal[j]) for j in range(n)]
+def u_opt_inc(t, t_opt, n, b):
+    return [b * (t > t_opt[j]) for j in range(n)]
 
 
 def count_events(times, a, b):
@@ -46,12 +46,12 @@ def events_vs_time(c, n, mu, alpha, w, t0, tf, b, d):
     pr = nx.pagerank(graph)
     weight = np.asanyarray(list(pr.values()))
 
-    t_optimal = maximize_weighted_activity(b, c, d, t0, tf, alpha, w)
+    t_opt = maximize_weighted_activity(b, c, d, t0, tf, alpha, w)
 
     times_deg, _ = generate_events(t0, tf, mu, alpha, lambda t: u_deg(t, tf, c, deg))
     times_prk, _ = generate_events(t0, tf, mu, alpha, lambda t: u_prk(t, tf, c, weight))
-    times_uniform, _ = generate_events(t0, tf, mu, alpha, lambda t: u_uniform(t, tf, c, n))
-    times_optimal, _ = generate_events(t0, tf, mu, alpha, lambda t: u_optimal_inc(t, t_optimal, n, b))
+    times_uniform, _ = generate_events(t0, tf, mu, alpha, lambda t: u_unf(t, tf, c, n))
+    times_optimal, _ = generate_events(t0, tf, mu, alpha, lambda t: u_opt_inc(t, t_opt, n, b))
     times_unc, _ = generate_events(t0, tf, mu, alpha)
 
     with open('./results/events_vs_time.pickle', 'wb') as f:
@@ -74,14 +74,14 @@ def obj_vs_budget(budget, n, mu, alpha, w, t0, tf, b, d):
     weight = np.asanyarray(list(pr.values()))
 
     obj = np.zeros((5, len(budget)))
-    t_optimal = np.zeros((len(budget), n))
+    t_opt = np.zeros((len(budget), n))
     for i in range(len(budget)):
         c = budget[i]
-        t_optimal[i, :] = maximize_weighted_activity(b, c, d, t0, tf, alpha, w)
+        t_opt[i, :] = maximize_weighted_activity(b, c, d, t0, tf, alpha, w)
         obj[0, i] = eval_weighted_activity(tf, lambda t: mu + u_deg(t, tf, c, deg), d, t0, tf, alpha, w)
         obj[1, i] = eval_weighted_activity(tf, lambda t: mu + u_prk(t, tf, c, weight), d, t0, tf, alpha, w)
-        obj[2, i] = eval_weighted_activity(tf, lambda t: mu + u_uniform(t, tf, c, n), d, t0, tf, alpha, w)
-        obj[3, i] = eval_weighted_activity(tf, lambda t: mu + u_optimal_inc(t, t_optimal[i, :], n, b), d, t0, tf, alpha, w)
+        obj[2, i] = eval_weighted_activity(tf, lambda t: mu + u_unf(t, tf, c, n), d, t0, tf, alpha, w)
+        obj[3, i] = eval_weighted_activity(tf, lambda t: mu + u_opt_inc(t, t_opt[i, :], n, b), d, t0, tf, alpha, w)
         obj[4, i] = eval_weighted_activity(tf, lambda t: mu, d, t0, tf, alpha, w)
 
     plt.clf()
@@ -94,11 +94,11 @@ def obj_vs_budget(budget, n, mu, alpha, w, t0, tf, b, d):
     plt.savefig('./results/obj_vs_budget.pdf')
 
     with open('./results/obj_vs_budget.pickle', 'wb') as f:
-        pickle.dump([obj, t_optimal, deg, weight,
+        pickle.dump([obj, t_opt, deg, weight,
                      budget, n, mu, alpha, w, t0, tf, b, d, RND_SEED], f)
 
     sio.savemat('./results/obj_vs_budget.mat',
-                {'obj': obj, 't_optimal': t_optimal, 'deg': deg, 'weight': weight,
+                {'obj': obj, 't_opt': t_opt, 'deg': deg, 'weight': weight,
                  'budget': budget, 'n': n, 'mu': mu, 'alpha': alpha, 'w': w, 't0': t0, 'tf': tf, 'b': b, 'd': d, 'seed': RND_SEED})
     return
 
@@ -113,14 +113,14 @@ def int_obj_vs_budget(budget, n, mu, alpha, w, t0, tf, b, d):
     weight = np.asanyarray(list(pr.values()))
 
     obj = np.zeros((5, len(budget)))
-    t_optimal = np.zeros((len(budget), n))
+    t_opt = np.zeros((len(budget), n))
     for i in range(len(budget)):
         c = budget[i]
-        t_optimal[i, :] = maximize_int_weighted_activity(b, c, d, t0, tf, alpha, w)
+        t_opt[i, :] = maximize_int_weighted_activity(b, c, d, t0, tf, alpha, w)
         obj[0, i] = eval_int_weighted_activity(lambda t: u_deg(t, tf, c, deg), d, t0, tf, alpha, w)
         obj[1, i] = eval_int_weighted_activity(lambda t: mu + u_prk(t, tf, c, weight), d, t0, tf, alpha, w)
-        obj[2, i] = eval_int_weighted_activity(lambda t: mu + u_uniform(t, tf, c, n), d, t0, tf, alpha, w)
-        obj[3, i] = eval_int_weighted_activity(lambda t: mu + u_optimal_dec(t, t_optimal[i, :], n, b), d, t0, tf, alpha, w)
+        obj[2, i] = eval_int_weighted_activity(lambda t: mu + u_unf(t, tf, c, n), d, t0, tf, alpha, w)
+        obj[3, i] = eval_int_weighted_activity(lambda t: mu + u_opt_dec(t, t_opt[i, :], n, b), d, t0, tf, alpha, w)
         obj[4, i] = eval_int_weighted_activity(lambda t: mu, d, t0, tf, alpha, w)
 
     plt.clf()
@@ -133,11 +133,11 @@ def int_obj_vs_budget(budget, n, mu, alpha, w, t0, tf, b, d):
     plt.savefig('./results/int_obj_vs_budget.pdf')
 
     with open('./results/int_obj_vs_budget.pickle', 'wb') as f:
-        pickle.dump([obj, t_optimal, deg, weight,
+        pickle.dump([obj, t_opt, deg, weight,
                      budget, n, mu, alpha, w, t0, tf, b, d, RND_SEED], f)
 
     sio.savemat('./results/int_obj_vs_budget.mat',
-                {'obj': obj, 't_optimal': t_optimal, 'deg': deg, 'weight': weight,
+                {'obj': obj, 't_opt': t_opt, 'deg': deg, 'weight': weight,
                  'budget': budget, 'n': n, 'mu': mu, 'alpha': alpha, 'w': w, 't0': t0, 'tf': tf, 'b': b, 'd': d, 'seed': RND_SEED})
     return
 
@@ -153,16 +153,16 @@ def events_vs_budget(budget, n, mu, alpha, w, t0, tf, b, d, itr):
 
     event_num = np.zeros([5, len(budget), itr])
     terminal_event_num = np.zeros([5, len(budget), itr])
-    t_optimal = np.zeros((len(budget), n))
+    t_opt = np.zeros((len(budget), n))
     for i in range(len(budget)):
         c = budget[i]
-        t_optimal[i, :] = maximize_weighted_activity(b, c, d, t0, tf, alpha, w)
+        t_opt[i, :] = maximize_weighted_activity(b, c, d, t0, tf, alpha, w)
 
         for j in range(itr):
             times_deg, _ = generate_events(t0, tf, mu, alpha, lambda t: u_deg(t, tf, c, deg))
             times_prk, _ = generate_events(t0, tf, mu, alpha, lambda t: u_prk(t, tf, c, weight))
-            times_uniform, _ = generate_events(t0, tf, mu, alpha, lambda t: u_uniform(t, tf, c, n))
-            times_optimal, _ = generate_events(t0, tf, mu, alpha, lambda t: u_optimal_inc(t, t_optimal[i, :], n, b))
+            times_uniform, _ = generate_events(t0, tf, mu, alpha, lambda t: u_unf(t, tf, c, n))
+            times_optimal, _ = generate_events(t0, tf, mu, alpha, lambda t: u_opt_inc(t, t_opt[i, :], n, b))
             times_unc, _ = generate_events(t0, tf, mu, alpha)
             event_num[0, i, j] = len(times_deg)
             event_num[1, i, j] = len(times_prk)
@@ -190,11 +190,11 @@ def events_vs_budget(budget, n, mu, alpha, w, t0, tf, b, d, itr):
     plt.savefig('./results/max_terminal_events_vs_budget.pdf')
 
     with open('./results/events_vs_budget.pickle', 'wb') as f:
-        pickle.dump([event_num, terminal_event_num, t_optimal, deg, weight,
+        pickle.dump([event_num, terminal_event_num, t_opt, deg, weight,
                      budget, n, mu, alpha, w, t0, tf, b, d, itr, RND_SEED], f)
 
     sio.savemat('./results/events_vs_budget.mat',
-                {'event_num': event_num, 'terminal_event_num': terminal_event_num, 't_optimal': t_optimal, 'deg': deg, 'weight': weight,
+                {'event_num': event_num, 'terminal_event_num': terminal_event_num, 't_opt': t_opt, 'deg': deg, 'weight': weight,
                  'budget': budget, 'n': n, 'mu': mu, 'alpha': alpha, 'w': w, 't0': t0, 'tf': tf, 'b': b, 'd': d, 'seed': RND_SEED})
     return
 
@@ -210,16 +210,16 @@ def int_events_vs_budget(budget, n, mu, alpha, w, t0, tf, b, d, itr):
 
     event_num = np.zeros([5, len(budget), itr])
     terminal_event_num = np.zeros([5, len(budget), itr])
-    t_optimal = np.zeros((len(budget), n))
+    t_opt = np.zeros((len(budget), n))
     for i in range(len(budget)):
         c = budget[i]
-        t_optimal[i, :] = maximize_int_weighted_activity(b, c, d, t0, tf, alpha, w)
+        t_opt[i, :] = maximize_int_weighted_activity(b, c, d, t0, tf, alpha, w)
 
         for j in range(itr):
             times_deg, _ = generate_events(t0, tf, mu, alpha, lambda t: u_deg(t, tf, c, deg))
             times_prk, _ = generate_events(t0, tf, mu, alpha, lambda t: u_prk(t, tf, c, weight))
-            times_uniform, _ = generate_events(t0, tf, mu, alpha, lambda t: u_uniform(t, tf, c, n))
-            times_optimal, _ = generate_events(t0, tf, mu, alpha, lambda t: u_optimal_dec(t, t_optimal[i, :], n, b))
+            times_uniform, _ = generate_events(t0, tf, mu, alpha, lambda t: u_unf(t, tf, c, n))
+            times_optimal, _ = generate_events(t0, tf, mu, alpha, lambda t: u_opt_dec(t, t_opt[i, :], n, b))
             times_unc, _ = generate_events(t0, tf, mu, alpha)
             event_num[0, i, j] = len(times_deg)
             event_num[1, i, j] = len(times_prk)
@@ -247,11 +247,11 @@ def int_events_vs_budget(budget, n, mu, alpha, w, t0, tf, b, d, itr):
     plt.savefig('./results/max_int_total_events_vs_budget.pdf')
 
     with open('./results/int_events_vs_budget.pickle', 'wb') as f:
-        pickle.dump([event_num, terminal_event_num, t_optimal, deg, weight,
+        pickle.dump([event_num, terminal_event_num, t_opt, deg, weight,
                      budget, n, mu, alpha, w, t0, tf, b, d, itr, RND_SEED], f)
 
     sio.savemat('./results/int_events_vs_budget.mat',
-                {'event_num': event_num, 'terminal_event_num': terminal_event_num, 't_optimal': t_optimal, 'deg': deg, 'weight': weight,
+                {'event_num': event_num, 'terminal_event_num': terminal_event_num, 't_opt': t_opt, 'deg': deg, 'weight': weight,
                  'budget': budget, 'n': n, 'mu': mu, 'alpha': alpha, 'w': w, 't0': t0, 'tf': tf, 'b': b, 'd': d, 'seed': RND_SEED})
     return
 
@@ -293,8 +293,8 @@ def mehrdad_eval(data_path, itr=30):
 def main():
     np.random.seed(RND_SEED)
     t0 = 0
-    tf = 50
-    n = 16
+    tf = 100
+    n = 8
     sparsity = 0.3
     mu_max = 0.01
     alpha_max = 0.1
@@ -310,9 +310,8 @@ def main():
 
     # mehrdad_eval('./data/mehrdad-64.mat')
 
-    events_vs_time(c*10, n, mu, alpha, w, t0, tf, b, d)
-
-    # obj_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, d)
+    # events_vs_time(c*10, n, mu, alpha, w, t0, tf, b, d)
+    obj_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, d)
     # int_obj_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, d)
     # events_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, d, itr)
     # int_events_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, d, itr)
