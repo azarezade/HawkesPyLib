@@ -294,7 +294,7 @@ def main():
     np.random.seed(RND_SEED)
     t0 = 0
     tf = 100
-    n = 8
+    n = 16
     sparsity = 0.3
     mu_max = 0.01
     alpha_max = 0.1
@@ -303,7 +303,7 @@ def main():
     b = 100 * mu_max
     c = 1 * tf * mu_max
     d = np.ones(n)
-    budgets = c * np.array([1, 10])
+    budgets = c * np.array([10])
     itr = 1
 
     mu, alpha = generate_model(n, sparsity, mu_max, alpha_max)

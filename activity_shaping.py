@@ -11,7 +11,7 @@ from scipy.linalg import logm, expm
 from scipy.optimize import fsolve, brentq
 import scipy.integrate as integrate
 from event_generation import *
-from activity_maximization import psi, psi_int
+from activity_maximization import psi, psi_int, eval_weighted_activity
 
 
 def f1(s, i, t0, tf, alpha, w, d, ell, b):
@@ -46,7 +46,7 @@ def maximize_shaping1(b, c, d, ell, t0, tf, mu, alpha, w, tol=1e-1):
     Solve the following optimization:
     """
     n = alpha.shape[0]
-    t = np.zeros(n)
+    t = np.ones(n)
 
     # I = np.eye(n)
     # eta = (I + alpha.dot(inv(alpha - w * I)).dot(expm((alpha - w * I) * tf) - I)).dot(mu)
@@ -90,6 +90,11 @@ def maximize_shaping2(b, c, d, ell, t0, tf, mu, alpha, w, tol=1e-1):
         m = (ub + lb) / 2.  # m = -nu
         # if m > 0:
         for i in range(n):
+            # if f2(t0, i, t0, tf, alpha, w, d, ell, b) < m:
+            #     t[i] = t0
+            # elif f2(tf, i, t0, tf, alpha, w, d, ell, b) > m:
+            #     t[i] = tf
+            # else:
             t[i] = brentq(lambda s: f2(s, i, t0, tf, alpha, w, d, ell, b) - m, t0, tf)
         print("ub={:.4f} \t lb={:.4f} \t t_star={} precision={} diff={}".
               format(ub, lb, [int(t_i) for t_i in t], f2(t[i], i, t0, tf, alpha, w, d, ell, b) - m, sum(t) * b - c))
@@ -104,7 +109,7 @@ def eval_shaping1(t, u, d, ell, t0, tf, alpha, w):
     n = alpha.shape[0]
     integral = np.zeros(n)
     for i in range(n):
-        integral[i] = u(t)[i] + integrate.quad(lambda s: u(s)[i] * psi(tf - s, alpha, w)[:, i].dot(d), t0, tf)[0]
+        integral[i] = u(t)[i] + integrate.quad(lambda s: u(s)[i] * psi(t - s, alpha, w)[:, i].dot(d), t0, tf)[0]
     obj = np.linalg.norm(integral - ell)
     print(integral)
     print(ell)
@@ -128,25 +133,27 @@ def main():
     # np.random.seed(100)
     t0 = 0
     tf = 100
-    n = 64
+    n = 8
     sparsity = 0.3
     mu_max = 0.01
     alpha_max = 0.1
     w = 1
 
-    # ell = np.array([2, 2, 2, 4, 4, 4, 4, 4])  # 3 * np.ones(n)
-    ell = 1 * np.random.rand(n)
+    ell = np.array([2, 2, 2, 4, 4, 4, 6, 4])  # 3 * np.ones(n)
+    # ell = 5 * np.random.rand(n)
+    # ell = 0.3 * np.ones(n)
 
-    b = 5 * mu_max
-    c = 20 * tf * mu_max
+    b = 100 * mu_max
+    c = 100 * tf * mu_max
     d = np.ones(n)
 
     mu, alpha = generate_model(n, sparsity, mu_max, alpha_max)
 
-    t_opt = maximize_shaping1(b, c, d, ell, t0, tf, mu, alpha, w)
-    eval_shaping1(tf, lambda s: [b * (s < t_opt[j]) for j in range(n)], d, ell, t0, tf, alpha, w)
-    # t_opt = maximize_shaping2(b, c, d, ell, t0, tf, mu, alpha, w)
-    # eval_shaping2(lambda s: [b * (s < t_opt[j]) for j in range(n)], d, ell, t0, tf, alpha, w)
+    # t_opt = maximize_shaping1(b, c, d, ell, t0, tf, mu, alpha, w)
+    # eval_shaping1(tf, lambda s: [b * (s < t_opt[j]) for j in range(n)], d, ell, t0, tf, alpha, w)
+
+    t_opt = maximize_shaping2(b, c, d, ell, t0, tf, mu, alpha, w)
+    eval_shaping2(lambda s: [b * (s < t_opt[j]) for j in range(n)], d, ell, t0, tf, alpha, w)
 
     # tt = np.arange(t0, tf, 1)
     # yy = np.zeros(len(tt))

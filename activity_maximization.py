@@ -174,7 +174,7 @@ def main():
     np.random.seed(0)
     t0 = 0
     tf = 100
-    n = 64
+    n = 16
     sparsity = 0.3
     mu_max = 0.01
     alpha_max = 0.1
@@ -197,7 +197,7 @@ def main():
     # yy = np.zeros(len(tt))
     # for i in range(n):
     #     for k in range(len(tt)):
-    #         # yy[k] = np.dot(d, psi(tf - tt[k], alpha, w)[:, i])
+    #         # yy[k] = np.dot(d, psi(tt[k], alpha, w)[:, i])
     #         yy[k] = psi_int(tt[k], t0, tf, alpha, w)[:, i].dot(d)
     #     plt.plot(tt, yy)
     # plt.show()
