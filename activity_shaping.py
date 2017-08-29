@@ -46,7 +46,7 @@ def maximize_shaping1(b, c, d, ell, t0, tf, mu, alpha, w, tol=1e-1):
     Solve the following optimization:
     """
     n = alpha.shape[0]
-    t = np.ones(n)
+    t = np.zeros(n)
 
     # I = np.eye(n)
     # eta = (I + alpha.dot(inv(alpha - w * I)).dot(expm((alpha - w * I) * tf) - I)).dot(mu)
