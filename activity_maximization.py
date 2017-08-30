@@ -174,14 +174,14 @@ def main():
     np.random.seed(0)
     t0 = 0
     tf = 100
-    n = 16
+    n = 8
     sparsity = 0.3
     mu_max = 0.01
     alpha_max = 0.1
     w = 1
 
-    b = 100 * mu_max
-    c = 1 * tf * mu_max
+    b = 10 * mu_max
+    c = 10 * tf * mu_max
     d = np.ones(n)
 
     mu, alpha = generate_model(n, sparsity, mu_max, alpha_max)
@@ -193,14 +193,14 @@ def main():
 
     # r = max(np.abs(np.linalg.eig(alpha)[0]))
 
-    # tt = np.arange(t0, tf, 1)
-    # yy = np.zeros(len(tt))
-    # for i in range(n):
-    #     for k in range(len(tt)):
-    #         # yy[k] = np.dot(d, psi(tt[k], alpha, w)[:, i])
-    #         yy[k] = psi_int(tt[k], t0, tf, alpha, w)[:, i].dot(d)
-    #     plt.plot(tt, yy)
-    # plt.show()
+    tt = np.arange(t0, tf, 1)
+    yy = np.zeros(len(tt))
+    for i in range(n):
+        for k in range(len(tt)):
+            yy[k] = psi(tt[k], alpha, w)[:, i].dot(d)
+            # yy[k] = psi_int(tt[k], t0, tf, alpha, w)[:, i].dot(d)
+        plt.plot(tt, yy)
+    plt.show()
 
 
 if __name__ == '__main__':
