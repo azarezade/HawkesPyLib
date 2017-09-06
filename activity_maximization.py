@@ -171,14 +171,14 @@ def maximize_int_weighted_activity(b, c, d, t0, tf, alpha, w=1, tol=1e-1):
 
 
 def main():
-    np.random.seed(0)
+    # np.random.seed(0)
     t0 = 0
     tf = 100
-    n = 8
+    n = 64
     sparsity = 0.3
     mu_max = 0.01
     alpha_max = 0.1
-    w = 1
+    w = 5
 
     b = 10 * mu_max
     c = 10 * tf * mu_max
@@ -193,13 +193,28 @@ def main():
 
     # r = max(np.abs(np.linalg.eig(alpha)[0]))
 
-    tt = np.arange(t0, tf, 1)
-    yy = np.zeros(len(tt))
+    # t = np.arange(t0, tf, 1)
+    # y = np.zeros((n, len(t)))
+    # for k in range(len(t)):
+    #     y_matrix = psi(t[k], alpha, w)
+    #     # y_matrix = psi_int(t[k], t0, tf, alpha, w)
+    #     for i in range(n):
+    #         y[i, k] = y_matrix[:, i].dot(d)
+    # for i in range(n):
+    #     plt.plot(t, y[i, :])
+    # plt.show()
+
+    t = np.arange(t0, tf, 1)
+    y = np.zeros((n, n, len(t)))
+    for k in range(len(t)):
+        y_matrix = psi(t[k], alpha, w)
+        # y_matrix = psi_int(t[k], t0, tf, alpha, w)
+        for i in range(n):
+            for j in range(n):
+                y[i, j, k] = y_matrix[i, j]
     for i in range(n):
-        for k in range(len(tt)):
-            yy[k] = psi(tt[k], alpha, w)[:, i].dot(d)
-            # yy[k] = psi_int(tt[k], t0, tf, alpha, w)[:, i].dot(d)
-        plt.plot(tt, yy)
+        for j in range(n):
+            plt.plot(t, y[i, j])
     plt.show()
 
 
