@@ -204,20 +204,6 @@ def main():
     #     plt.plot(t, y[i, :])
     # plt.show()
 
-    t = np.arange(t0, tf, 1)
-    y = np.zeros((n, n, len(t)))
-    for k in range(len(t)):
-        y_matrix = psi(t[k], alpha, w)
-        # y_matrix = psi_int(t[k], t0, tf, alpha, w)
-        for i in range(n):
-            for j in range(n):
-                y[i, j, k] = y_matrix[i, j]
-    for i in range(n):
-        for j in range(n):
-            plt.plot(t, y[i, j])
-    plt.show()
-
 
 if __name__ == '__main__':
     main()
-
