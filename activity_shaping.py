@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import scipy.io as sio
 
 from numpy.linalg import inv
-from scipy.linalg import logm, expm
+from scipy.linalg import logm, expm2
 from scipy.optimize import brentq, newton_krylov, anderson, least_squares
 import scipy.integrate as integrate
 from event_generation import *
@@ -28,7 +28,7 @@ def g_int(t, tf, alpha, w):
     elif t == tf:
         return I
     else:
-        return I - alpha.dot(alpha_w_inv).dot(I - expm(alpha_w * (tf - t)))
+        return I - alpha.dot(alpha_w_inv).dot(I - expm2(alpha_w * (tf - t)))
 
 
 # def f(s, i, tf, alpha, w, ell):
@@ -56,12 +56,12 @@ def f_int(s, i, t0, tf, alpha, w, d, ell, b):
     return
 
 
-def maximize_shaping(b, c, ell, t0, tf, alpha, w, tol=1e-1):
+def maximize_shaping(b, c, ell, t0, tf, alpha, w, tol=5*1e-1):
     """
     Solve the following optimization: TBD...
     """
     n = alpha.shape[0]
-    t = tf * np.ones(n)
+    t_opt = tf * np.ones(n)
 
     r = max(np.abs(np.linalg.eig(alpha)[0]))
     print("spectral radius = {}".format(r))
@@ -75,25 +75,30 @@ def maximize_shaping(b, c, ell, t0, tf, alpha, w, tol=1e-1):
     print("ub={} \t lb={}".format(ub, lb))
 
     # TODO: revise the following condition!
-    # # if max(f(tf * np.ones(n), tf, alpha, w, ell, b)) > 0:
-    res = least_squares(lambda s: b * sum([g_int(s[i], tf, alpha, w)[:,i] for i in range(n)]) - ell,
-                        t_0, bounds=(0, 100), verbose=1,  loss='cauchy', gtol=1e-15, xtol=1e-15)
+    res = least_squares(lambda s: b * sum([g_int(s[i], tf, alpha, w)[:, i] for i in range(n)]) - ell, t_0,
+                        bounds=(0, 100), verbose=1,  loss='cauchy', xtol=1e-2)
     t_opt = res.x
     if n*tf - sum(t_opt) < c/b:
         print('budget inequality constraint is inactive')
         return t_opt
     else:
-        while abs(sum(t) + c/b - n*tf) > tol:
+        prev_tol = 0
+        # TODO: revise the following condition, as well!
+        while abs(sum(t_opt) + c/b - n*tf) > tol:
             m = (ub + lb) / 2.0  # m = nu
-            res = least_squares(lambda s: f(s, tf, alpha, w, ell, b) - m, t_0, bounds=(0, 100), verbose=1)
-            t = res.x
-            t_0 = t
-            print('ub={} \t lb={} \t tol={} \n t={}'.format(ub, lb, abs(sum(t) + c/b - n*tf), t))
-            if n*tf - sum(t) < c/b:
+            res = least_squares(lambda s: f(s, tf, alpha, w, ell, b) - m, t_0, bounds=(0, 100), verbose=1, xtol=1e-2)
+            t_opt = res.x
+            t_0 = t_opt
+            print('ub={} \t lb={} \t tol={} \n t_opt={}'.format(ub, lb, n*tf - sum(t_opt) - c/b, t_opt))
+            print("optimal = {}".format(eval_shaping(t_opt, b, ell, tf, alpha, w)))
+            if abs(prev_tol - (n*tf - sum(t_opt) - c/b)) < 1e-3:
+                return t_opt
+            if n*tf - sum(t_opt) < c/b:
                 ub = m
             else:
                 lb = m
-        return t
+            prev_tol = n*tf - sum(t_opt) - c/b
+        return t_opt
 
 
 def eval_shaping(s, b, ell, tf, alpha, w):
@@ -103,14 +108,14 @@ def eval_shaping(s, b, ell, tf, alpha, w):
 
     int_total = np.zeros(n)
     for i in range(n):
-        # int_u_g = (alpha.dot(inv(Aw)).dot(expm(Aw * tf) - expm(Aw * (tf - s[i]))))[:, i] + float(s[i] == tf) * I[:, i]
-        int_u_g = (I - alpha.dot(inv(Aw)).dot(I - expm(Aw * (tf - s[i]))))[:, i]
+        # int_u_g = (alpha.dot(inv(Aw)).dot(expm2(Aw * tf) - expm2(Aw * (tf - s[i]))))[:, i] + float(s[i] == tf) * I[:, i]
+        int_u_g = (I - alpha.dot(inv(Aw)).dot(I - expm2(Aw * (tf - s[i]))))[:, i]
         int_total += b * int_u_g
 
     obj = np.linalg.norm(int_total - ell) / n
-    print(int_total)
-    print(ell)
-    print(obj)
+    # print(int_total)
+    # print(ell)
+    # print(obj)
     return obj
 
 
@@ -123,7 +128,7 @@ def eval_shaping_int(s, b, d, ell, tf, alpha, w):
 
     integral = np.zeros(n)
     for i in range(n):
-        u_psi = (I * s[i] + alpha.dot(Awi2).dot(expm(Aw * (tf - s[i])) - expm(Aw * tf)) - s[i] * alpha.dot(Awi))[:, i]
+        u_psi = (I * s[i] + alpha.dot(Awi2).dot(expm2(Aw * (tf - s[i])) - expm2(Aw * tf)) - s[i] * alpha.dot(Awi))[:, i]
         integral[i] = b * u_psi.dot(d)
 
     obj = np.linalg.norm(integral - ell)
@@ -134,7 +139,7 @@ def eval_shaping_int(s, b, d, ell, tf, alpha, w):
 
 
 def main():
-    # np.random.seed(0)
+    np.random.seed(5)
     t0 = 0
     tf = 100
     n = 16
@@ -149,15 +154,14 @@ def main():
 
     mu, alpha = generate_model(n, sparsity, mu_max, alpha_max)
 
-    ell = 100 * g_int(0, tf, alpha, w).dot(mu_max * np.ones(n))
+    ell = 110 * g_int(0, tf, alpha, w).dot(mu_max * np.ones(n))
     # ell = np.ones(n) + np.array([0.05, 0.01, 0.01, 0.01, 0.01, 0.01, 0.03, 0.06])
     # int_mu_g = g_int(0, tf, alpha, w).dot(mu)
 
-    # ell += int_mu_g
-
     t_opt = maximize_shaping(b, c, ell, t0, tf, alpha, w)
-    eval_shaping(t_opt, b, ell, tf, alpha, w)
-    print(t_opt)
+    print("optimal = {}, uniform = {}".format(eval_shaping(t_opt, b, ell, tf, alpha, w),
+                                              eval_shaping(np.zeros(n), c/(n*tf), ell, tf, alpha, w)))
+    # print(t_opt)
     print(n*tf - sum(t_opt), c/b)
 
     # t_opt = maximize_shaping_int(b, c, d, ell, t0, tf, mu, alpha, w)
@@ -177,7 +181,7 @@ def main():
     #         plt.plot(t, y[i, j, :])
     # plt.show()
 
-    # t = np.arange(t0, tf, 1)
+    # t = np.arange(t0, tf, 2)
     # y = np.zeros((n, len(t)))
     # for i in range(n):
     #     for k in range(len(t)):
