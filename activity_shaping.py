@@ -6,6 +6,10 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import scipy.io as sio
 
+# # Set limit to number of cores:
+# import mkl
+# mkl.set_num_threads(n)
+
 from numpy.linalg import inv
 from scipy.linalg import logm, expm2
 from scipy.optimize import brentq, newton_krylov, anderson, least_squares
