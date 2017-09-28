@@ -139,10 +139,10 @@ def eval_shaping_int(s, b, d, ell, tf, alpha, w):
 
 
 def main():
-    np.random.seed(5)
+    np.random.seed(4)
     t0 = 0
     tf = 100
-    n = 16
+    n = 64
     sparsity = 0.3
     mu_max = 0.01
     alpha_max = 0.1
