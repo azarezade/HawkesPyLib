@@ -7,6 +7,7 @@ import scipy.io as sio
 
 from activity_maximization import maximize_weighted_activity, maximize_int_weighted_activity, eval_weighted_activity, eval_int_weighted_activity
 from event_generation import generate_model, generate_events
+from activity_shaping import eval_shaping, maximize_shaping, g_int
 
 
 def u_deg(t, tf, c, deg):
@@ -290,32 +291,60 @@ def mehrdad_eval(data_path, itr=30):
     return
 
 
+def shaping_obj_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, ell):
+    obj = np.zeros((2, len(budgets)))
+    t_opt = np.zeros((len(budgets), n))
+    for i in range(len(budgets)):
+        c = budgets[i]
+        t_opt[i, :] = maximize_shaping(b, c, ell, t0, tf, alpha, w)
+        obj[0, i] = eval_shaping(np.zeros(n), c/(n*tf), ell, tf, alpha, w)
+        obj[1, i] = eval_shaping(t_opt[i, :], b, ell, tf, alpha, w)
+
+    plt.clf()
+    plt.plot(budgets, obj[0, :], label="UNF")
+    plt.plot(budgets, obj[1, :], label="OPT")
+    plt.legend(loc="upper left")
+    plt.savefig('./results/shaping_obj_vs_budget.pdf')
+
+    with open('./results/shaping_obj_vs_budget.pickle', 'wb') as f:
+        pickle.dump([obj, t_opt, budgets, n, mu, alpha, w, t0, tf, b, ell, RND_SEED], f)
+
+    sio.savemat('./results/shaping_obj_vs_budget.mat',
+                {'obj': obj, 't_opt': t_opt, 'budget': budgets, 'n': n, 'mu': mu, 'alpha': alpha, 'w': w, 't0': t0,
+                 'tf': tf, 'b': b, 'ell': ell, 'seed': RND_SEED})
+    return
+
+
 def main():
     np.random.seed(RND_SEED)
     t0 = 0
     tf = 100
-    n = 16
+    n = 64
     sparsity = 0.3
     mu_max = 0.01
     alpha_max = 0.1
-    w = 1
+    w = 2
 
     b = 100 * mu_max
     c = 1 * tf * mu_max
     d = np.ones(n)
-    budgets = c * np.array([10])
+    budgets = c * n * np.array([10, 5, 1])
     itr = 1
 
     mu, alpha = generate_model(n, sparsity, mu_max, alpha_max)
+    ell = 110 * g_int(0, tf, alpha, w).dot(mu_max * np.ones(n))
 
     # mehrdad_eval('./data/mehrdad-64.mat')
 
     # events_vs_time(c*10, n, mu, alpha, w, t0, tf, b, d)
-    obj_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, d)
+    # obj_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, d)
     # int_obj_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, d)
     # events_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, d, itr)
     # int_events_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, d, itr)
 
+    shaping_obj_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, ell)
+
+
 if __name__ == '__main__':
-    RND_SEED = 10
+    RND_SEED = 4
     main()
