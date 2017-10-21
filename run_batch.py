@@ -341,7 +341,7 @@ def main():
     b = 100 * mu_max
     c = n * tf * mu_max
     d = np.ones(n)
-    budgets = c * np.array([1, 5, 10, 15, 20, 30])
+    budgets = c * np.array([0.1, 1, 5, 10, 15, 20, 30])
     itr = 1
 
     mu, alpha = generate_model(n, sparsity, mu_max, alpha_max)

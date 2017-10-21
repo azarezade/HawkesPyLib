@@ -77,7 +77,8 @@ def maximize_shaping(b, c, ell, t0, tf, alpha, w, tol=1e-4):
     x_opt = res.x
     t_opt = x_opt[:n]
     u_opt = x_opt[n:2*n]
-
+    # obj_opt, int_opt = eval_shaping(t_opt, u_opt, ell, tf, alpha, w)
+    # print(obj_opt, np.dot(tf - t_opt, u_opt), c)
     if np.dot(tf - t_opt, u_opt) < c:
         print('Budget inequality constraint is inactive.\n')
     else:
@@ -125,10 +126,10 @@ def eval_shaping_int(s, b, d, ell, tf, alpha, w):
 
 
 def main():
-    np.random.seed(1)
+    np.random.seed(10)
     t0 = 0
     tf = 100
-    n = 8
+    n = 64
     sparsity = 0.3
     mu_max = 0.01
     alpha_max = 0.1
@@ -139,7 +140,8 @@ def main():
     mu, alpha = generate_model(n, sparsity, mu_max, alpha_max)
     # alpha = 0.5 * (np.transpose(alpha) + alpha)
 
-    ell = 1 * np.array([0.0250, 0.0250, 0.0500, 0.7500] * int(n/4))
+    # ell = 1 * np.array([0.0250, 0.0250, 0.0500, 0.7500] * int(n/4))
+    ell = 1 * np.array([0.2, 0.4, 0.6, 0.8] * int(n / 4))
     ell = ell - np.dot(g_int(0, tf, alpha, w), mu)
 
     sio.savemat('./data/pydata-lsq-'+str(n)+'.mat',
