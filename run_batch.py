@@ -292,26 +292,39 @@ def mehrdad_eval(data_path, itr=30):
 
 
 def shaping_obj_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, ell):
-    obj = np.zeros((2, len(budgets)))
+    deg = np.zeros(n)
+    for j in range(n):
+        deg[j] = np.count_nonzero(alpha[j, :])
+
+    graph = nx.from_numpy_matrix(alpha)
+    pr = nx.pagerank(graph)
+    weight = np.asanyarray(list(pr.values()))
+
+    obj = np.zeros((4, len(budgets)))
     t_opt = np.zeros((len(budgets), n))
+    u_opt = np.zeros((len(budgets), n))
     for i in range(len(budgets)):
         c = budgets[i]
-        t_opt[i, :] = maximize_shaping(b, c, ell, t0, tf, alpha, w)
-        obj[0, i] = eval_shaping(np.zeros(n), c/(n*tf), ell, tf, alpha, w)
-        obj[1, i] = eval_shaping(t_opt[i, :], b, ell, tf, alpha, w)
+        t_opt[i, :], u_opt[i, :] = maximize_shaping(b, c, ell, t0, tf, alpha, w)
+        obj[0, i], unf_int = eval_shaping(np.zeros(n), (deg/sum(deg))*(c/tf)*np.ones(n), ell, tf, alpha, w)
+        obj[1, i], unf_int = eval_shaping(np.zeros(n), weight*(c/tf)*np.ones(n), ell, tf, alpha, w)
+        obj[2, i], unf_int = eval_shaping(np.zeros(n), (1/n)*(c/tf)*np.ones(n), ell, tf, alpha, w)
+        obj[3, i], opt_int = eval_shaping(t_opt[i, :], u_opt[i, :], ell, tf, alpha, w)
 
     plt.clf()
-    plt.plot(budgets, obj[0, :], label="UNF")
-    plt.plot(budgets, obj[1, :], label="OPT")
+    plt.plot(budgets, obj[0, :], label="DEG")
+    plt.plot(budgets, obj[1, :], label="PRK")
+    plt.plot(budgets, obj[2, :], label="UNF")
+    plt.plot(budgets, obj[3, :], label="OPT")
     plt.legend(loc="upper left")
     plt.savefig('./results/shaping_obj_vs_budget.pdf')
 
     with open('./results/shaping_obj_vs_budget.pickle', 'wb') as f:
-        pickle.dump([obj, t_opt, budgets, n, mu, alpha, w, t0, tf, b, ell, RND_SEED], f)
+        pickle.dump([obj, t_opt, u_opt, budgets, n, mu, alpha, w, t0, tf, b, ell, RND_SEED], f)
 
     sio.savemat('./results/shaping_obj_vs_budget.mat',
-                {'obj': obj, 't_opt': t_opt, 'budget': budgets, 'n': n, 'mu': mu, 'alpha': alpha, 'w': w, 't0': t0,
-                 'tf': tf, 'b': b, 'ell': ell, 'seed': RND_SEED})
+                {'obj': obj, 't_opt': t_opt, 'u_opt': u_opt, 'budget': budgets, 'n': n, 'mu': mu, 'alpha': alpha,
+                 'w': w, 't0': t0, 'tf': tf, 'b': b, 'ell': ell, 'seed': RND_SEED})
     return
 
 
@@ -319,7 +332,7 @@ def main():
     np.random.seed(RND_SEED)
     t0 = 0
     tf = 100
-    n = 64
+    n = 8
     sparsity = 0.3
     mu_max = 0.01
     alpha_max = 0.1
@@ -331,8 +344,10 @@ def main():
     budgets = c * n * np.array([10, 5, 1])
     itr = 1
 
+    ell = 1 * np.array([0.0250, 0.0250, 0.0500, 0.1000] * int(n/4))
+    # ell = 110 * g_int(0, tf, alpha, w).dot(mu_max * np.ones(n))
+
     mu, alpha = generate_model(n, sparsity, mu_max, alpha_max)
-    ell = 110 * g_int(0, tf, alpha, w).dot(mu_max * np.ones(n))
 
     # mehrdad_eval('./data/mehrdad-64.mat')
 
