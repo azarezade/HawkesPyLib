@@ -339,15 +339,15 @@ def main():
     w = 2
 
     b = 100 * mu_max
-    c = 1 * tf * mu_max
+    c = n * tf * mu_max
     d = np.ones(n)
-    budgets = c * n * np.array([10, 5, 1])
+    budgets = c * np.array([1, 5, 10, 15, 20, 30])
     itr = 1
 
-    ell = 1 * np.array([0.0250, 0.0250, 0.0500, 0.1000] * int(n/4))
-    # ell = 110 * g_int(0, tf, alpha, w).dot(mu_max * np.ones(n))
-
     mu, alpha = generate_model(n, sparsity, mu_max, alpha_max)
+
+    ell = 1 * np.array([0.0250, 0.0250, 0.0500, 0.7500] * int(n / 4))
+    ell = ell - np.dot(g_int(0, tf, alpha, w), mu)
 
     # mehrdad_eval('./data/mehrdad-64.mat')
 
@@ -361,5 +361,5 @@ def main():
 
 
 if __name__ == '__main__':
-    RND_SEED = 4
+    RND_SEED = 1
     main()

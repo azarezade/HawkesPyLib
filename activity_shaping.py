@@ -63,6 +63,7 @@ def maximize_shaping(b, c, ell, t0, tf, alpha, w, tol=1e-4):
     """
     Solve the following optimization: TBD...
     """
+    # np.dot(g_int(0, tf, alpha, w), mu)
     n = alpha.shape[0]
     r = max(np.abs(np.linalg.eig(alpha)[0]))
     print("spectral radius = {}".format(r))
@@ -76,10 +77,6 @@ def maximize_shaping(b, c, ell, t0, tf, alpha, w, tol=1e-4):
     x_opt = res.x
     t_opt = x_opt[:n]
     u_opt = x_opt[n:2*n]
-
-    # opt_obj, opt_int = eval_shaping(t_opt, u_opt, ell, tf, alpha, w)
-    # print(opt_obj, np.dot(tf - t_opt, u_opt), c)
-    # print(t_opt, u_opt)
 
     if np.dot(tf - t_opt, u_opt) < c:
         print('Budget inequality constraint is inactive.\n')
@@ -131,23 +128,29 @@ def main():
     np.random.seed(1)
     t0 = 0
     tf = 100
-    n = 32
+    n = 8
     sparsity = 0.3
     mu_max = 0.01
     alpha_max = 0.1
     w = 1
     b = 100 * mu_max
     c = 1 * n * tf * mu_max
-    ell = 1 * np.array([0.0125, 0.0250, 0.0500, 0.7500] * int(n/4))
 
     mu, alpha = generate_model(n, sparsity, mu_max, alpha_max)
     # alpha = 0.5 * (np.transpose(alpha) + alpha)
-    sio.savemat('./data/pydata-lsq-32.mat', {'T': tf, 'N': n, 'w': w, 'mu': mu, 'alpha': alpha, 'C': c / tf, 'v': ell})
+
+    ell = 1 * np.array([0.0250, 0.0250, 0.0500, 0.7500] * int(n/4))
+    ell = ell - np.dot(g_int(0, tf, alpha, w), mu)
+
+    sio.savemat('./data/pydata-lsq-'+str(n)+'.mat',
+                {'T': tf, 'N': n, 'w': w, 'mu': mu, 'alpha': alpha, 'C': c / tf, 'v': ell})
 
     t_opt, u_opt = maximize_shaping(b, c, ell, t0, tf, alpha, w)
-    opt_obj, opt_int = eval_shaping(t_opt, u_opt, ell, tf, alpha, w)
-    unf_obj, unf_int = eval_shaping(np.zeros(n), c / (n * tf) * np.ones(n), ell, tf, alpha, w)
-    print("opt_obj = {}, unf_obj = {} \n opt_int = {} \n  unf_int = {},".format(opt_obj, unf_obj, opt_int, unf_int))
+    obj_opt, int_opt = eval_shaping(t_opt, u_opt, ell, tf, alpha, w)
+    obj_unf, int_unf = eval_shaping(np.zeros(n), c / (n * tf) * np.ones(n), ell, tf, alpha, w)
+    print("obj_opt = {}, obj_unf = {}".format(obj_opt, obj_unf))
+    print("ell = {}".format(ell))
+    print("int_opt = {} \n  int_unf = {},".format(int_opt, int_unf))
     print("opt_t = {}, \n opt_u = {}".format(t_opt, u_opt))
     print("opt_budget = {}, c = {}".format(np.dot(tf - t_opt, u_opt), c))
 
