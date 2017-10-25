@@ -332,21 +332,21 @@ def main():
     np.random.seed(RND_SEED)
     t0 = 0
     tf = 100
-    n = 8
+    n = 64
     sparsity = 0.3
     mu_max = 0.01
     alpha_max = 0.1
-    w = 2
+    w = 1
 
     b = 100 * mu_max
     c = n * tf * mu_max
     d = np.ones(n)
-    budgets = c * np.array([0.1, 1, 5, 10, 15, 20, 30])
+    budgets = c * np.array([0.01, 0.1, 1, 10, 100, 1000])
     itr = 1
 
     mu, alpha = generate_model(n, sparsity, mu_max, alpha_max)
 
-    ell = 1 * np.array([0.0250, 0.0250, 0.0500, 0.7500] * int(n / 4))
+    ell = 5 * np.array([0.0250, 0.0250, 0.0500, 0.7500] * int(n / 4))
     ell = ell - np.dot(g_int(0, tf, alpha, w), mu)
 
     # mehrdad_eval('./data/mehrdad-64.mat')
