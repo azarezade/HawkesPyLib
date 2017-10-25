@@ -70,23 +70,14 @@ def maximize_shaping(b, c, ell, t0, tf, alpha, w, tol=1e-4):
     if r > w:
         raise Exception("spectral radius r={} is greater that w={}".format(r, w))
 
-    x_0 = np.append(tf * 0.9 * np.ones(n), b * np.ones(n))
-    res = least_squares(lambda s: sum([s[n+i] * g_int(s[i], tf, alpha, w)[:, i] for i in range(n)]) - ell, x_0,
+    x_0 = np.append(tf * 0.99 * np.ones(n), b * np.ones(n))
+    res = least_squares(lambda s: sum([s[n+i] * g_int(s[i], tf, alpha, w)[:, i] for i in range(n)]) - ell
+                        + 1e8 * (np.dot(tf - s[:n], s[n:2*n]) > c), x_0,
                         bounds=(np.zeros(n+n), np.append(100*np.ones(n), b*np.ones(n))),
                         loss='cauchy', xtol=tol, verbose=1)
     x_opt = res.x
     t_opt = x_opt[:n]
     u_opt = x_opt[n:2*n]
-    # obj_opt, int_opt = eval_shaping(t_opt, u_opt, ell, tf, alpha, w)
-    # print(obj_opt, np.dot(tf - t_opt, u_opt), c)
-    if np.dot(tf - t_opt, u_opt) < c:
-        print('Budget inequality constraint is inactive.\n')
-    else:
-        t_0 = tf * 0.99 * np.ones(n)
-        res = least_squares(lambda s: sum([b * g_int(s[i], tf, alpha, w)[:, i] for i in range(n)]) - ell +
-                            1e8 * (b*sum(tf-t_opt) > c), t_0, bounds=(0, 100), xtol=tol, verbose=1)
-        t_opt = res.x
-        u_opt = b*np.ones(n)
     return t_opt, u_opt
 
 
@@ -129,7 +120,7 @@ def main():
     np.random.seed(10)
     t0 = 0
     tf = 100
-    n = 64
+    n = 16
     sparsity = 0.3
     mu_max = 0.01
     alpha_max = 0.1
@@ -141,7 +132,7 @@ def main():
     # alpha = 0.5 * (np.transpose(alpha) + alpha)
 
     # ell = 1 * np.array([0.0250, 0.0250, 0.0500, 0.7500] * int(n/4))
-    ell = 1 * np.array([0.2, 0.4, 0.6, 0.8] * int(n / 4))
+    ell = 3 * np.array([0.2, 0.4, 0.6, 0.8] * int(n / 4))
     ell = ell - np.dot(g_int(0, tf, alpha, w), mu)
 
     sio.savemat('./data/pydata-lsq-'+str(n)+'.mat',
