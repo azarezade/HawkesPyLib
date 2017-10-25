@@ -1,14 +1,15 @@
 # __author__ = 'Ali_Zarezade'
 
+# # Set limit to the number of cores:
+# import mkl
+# mkl.set_num_threads(n)
+
 import numpy as np
 import matplotlib as mpl
 # mpl.use('Agg')
 import matplotlib.pyplot as plt
 import scipy.io as sio
 
-# # Set limit to the number of cores:
-# import mkl
-# mkl.set_num_threads(n)
 
 from numpy.linalg import inv
 from scipy.linalg import logm, expm

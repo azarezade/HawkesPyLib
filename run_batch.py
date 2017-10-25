@@ -1,3 +1,9 @@
+# __author__ = 'Ali_Zarezade'
+
+# # Set limit to the number of cores:
+# import mkl
+# mkl.set_num_threads(n)
+
 import pickle
 import numpy as np
 import networkx as nx
