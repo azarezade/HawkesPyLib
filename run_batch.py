@@ -306,23 +306,30 @@ def shaping_obj_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, ell):
     pr = nx.pagerank(graph)
     weight = np.asanyarray(list(pr.values()))
 
-    obj = np.zeros((4, len(budgets)))
+    obj = np.zeros((7, len(budgets)))
     t_opt = np.zeros((len(budgets), n))
     u_opt = np.zeros((len(budgets), n))
     for i in range(len(budgets)):
         c = budgets[i]
         t_opt[i, :], u_opt[i, :] = maximize_shaping(b, c, ell, t0, tf, alpha, w)
-        obj[0, i], _ = eval_shaping(np.zeros(n), (deg/sum(deg))*(c/tf)*np.ones(n), ell, tf, alpha, w)
-        obj[1, i], _ = eval_shaping(np.zeros(n), weight*(c/tf)*np.ones(n), ell, tf, alpha, w)
-        obj[2, i], _ = eval_shaping(np.zeros(n), (1/n)*(c/tf)*np.ones(n), ell, tf, alpha, w)
-        obj[3, i], _ = eval_shaping(t_opt[i, :], u_opt[i, :], ell, tf, alpha, w)
-        # print("used_budget={}, total_budget={}".format(np.dot(tf-t_opt, u_opt), c))
+        c_opt = np.dot(tf-t_opt[i, :], u_opt[i, :])
+        obj[0, i], _ = eval_shaping(np.zeros(n), (deg / sum(deg)) * (c / tf) * np.ones(n), ell, tf, alpha, w)
+        obj[1, i], _ = eval_shaping(np.zeros(n), (deg / sum(deg)) * (c_opt / tf) * np.ones(n), ell, tf, alpha, w)
+        obj[2, i], _ = eval_shaping(np.zeros(n), weight * (c / tf) * np.ones(n), ell, tf, alpha, w)
+        obj[3, i], _ = eval_shaping(np.zeros(n), weight * (c_opt / tf) * np.ones(n), ell, tf, alpha, w)
+        obj[4, i], _ = eval_shaping(np.zeros(n), (1 / n) * (c / tf) * np.ones(n), ell, tf, alpha, w)
+        obj[5, i], _ = eval_shaping(np.zeros(n), (1 / n) * (c_opt / tf) * np.ones(n), ell, tf, alpha, w)
+        obj[6, i], _ = eval_shaping(t_opt[i, :], u_opt[i, :], ell, tf, alpha, w)
+        print("used_budget={}, total_budget={}, obj={}".format(np.dot(tf-t_opt[i, :], u_opt[i, :]), c, obj[:,i]))
 
     plt.clf()
     plt.plot(budgets, obj[0, :], label="DEG")
-    plt.plot(budgets, obj[1, :], label="PRK")
-    plt.plot(budgets, obj[2, :], label="UNF")
-    plt.plot(budgets, obj[3, :], label="OPT")
+    plt.plot(budgets, obj[1, :], label="DEG2")
+    plt.plot(budgets, obj[2, :], label="PRK")
+    plt.plot(budgets, obj[3, :], label="PRK2")
+    plt.plot(budgets, obj[4, :], label="UNF")
+    plt.plot(budgets, obj[5, :], label="UNF2")
+    plt.plot(budgets, obj[6, :], label="OPT")
     plt.legend(loc="upper left")
     plt.savefig('./results/shaping_obj_vs_budget.pdf')
 
@@ -339,7 +346,7 @@ def main():
     np.random.seed(RND_SEED)
     t0 = 0
     tf = 100
-    n = 8
+    n = 64
     sparsity = 0.3
     mu_max = 0.01
     alpha_max = 0.1
@@ -348,7 +355,7 @@ def main():
     b = 100 * mu_max
     c = n * tf * mu_max
     d = np.ones(n)
-    budgets = c * np.array([0.005, 0.01, 0.05, 0.1, 1, 5])
+    budgets = c * np.array([0.01, 0.05, 0.15, 0.2, 0.25, 0.3])
     itr = 1
 
     mu, alpha = generate_model(n, sparsity, mu_max, alpha_max)

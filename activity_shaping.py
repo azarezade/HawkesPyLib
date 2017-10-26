@@ -60,7 +60,7 @@ def f_int(s, i, t0, tf, alpha, w, d, ell, b):
     return
 
 
-def maximize_shaping(b, c, ell, t0, tf, alpha, w, tol=1e-4):
+def maximize_shaping(b, c, ell, t0, tf, alpha, w, tol=1e-5):
     """
     Solve the following optimization: TBD...
     """
@@ -73,12 +73,11 @@ def maximize_shaping(b, c, ell, t0, tf, alpha, w, tol=1e-4):
 
     x_0 = np.append(tf * 0.99 * np.ones(n), b * np.ones(n))
     res = least_squares(lambda s: 1e5 * (np.dot(tf - s[:n], s[n:2*n]) > c) +
-                                  (sum([s[n+i] * g_int(s[i], tf, alpha, w)[:, i] for i in range(n)]) - ell),
+                        (sum([s[n+i] * g_int(s[i], tf, alpha, w)[:, i] for i in range(n)]) - ell),
                         x_0, bounds=(np.zeros(n+n), np.append(tf*np.ones(n), b*np.ones(n))), loss='linear', xtol=tol)
     x_opt = res.x
     t_opt = x_opt[:n]
     u_opt = x_opt[n:2*n]
-    print("used_budget={}, total_budget={}, obj={}".format(np.dot(tf-t_opt, u_opt), c, res.cost))
     return t_opt, u_opt
 
 
