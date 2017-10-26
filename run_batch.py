@@ -316,7 +316,6 @@ def shaping_obj_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, ell):
         obj[1, i], _ = eval_shaping(np.zeros(n), weight*(c/tf)*np.ones(n), ell, tf, alpha, w)
         obj[2, i], _ = eval_shaping(np.zeros(n), (1/n)*(c/tf)*np.ones(n), ell, tf, alpha, w)
         obj[3, i], _ = eval_shaping(t_opt[i, :], u_opt[i, :], ell, tf, alpha, w)
-        # print("objs=", obj[:,i])
         # print("used_budget={}, total_budget={}".format(np.dot(tf-t_opt, u_opt), c))
 
     plt.clf()
