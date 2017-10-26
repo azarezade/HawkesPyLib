@@ -78,7 +78,7 @@ def maximize_shaping(b, c, ell, t0, tf, alpha, w, tol=1e-4):
     x_opt = res.x
     t_opt = x_opt[:n]
     u_opt = x_opt[n:2*n]
-    print(np.dot(tf - t_opt, u_opt), res.cost)
+    print("used_budget={}, total_budget={}, obj={}".format(np.dot(tf-t_opt, u_opt), c), res.cost)
     return t_opt, u_opt
 
 

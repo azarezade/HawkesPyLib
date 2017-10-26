@@ -312,11 +312,12 @@ def shaping_obj_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, ell):
     for i in range(len(budgets)):
         c = budgets[i]
         t_opt[i, :], u_opt[i, :] = maximize_shaping(b, c, ell, t0, tf, alpha, w)
-        obj[0, i], unf_int = eval_shaping(np.zeros(n), (deg/sum(deg))*(c/tf)*np.ones(n), ell, tf, alpha, w)
-        obj[1, i], unf_int = eval_shaping(np.zeros(n), weight*(c/tf)*np.ones(n), ell, tf, alpha, w)
-        obj[2, i], unf_int = eval_shaping(np.zeros(n), (1/n)*(c/tf)*np.ones(n), ell, tf, alpha, w)
-        obj[3, i], opt_int = eval_shaping(t_opt[i, :], u_opt[i, :], ell, tf, alpha, w)
-        print()
+        obj[0, i], _ = eval_shaping(np.zeros(n), (deg/sum(deg))*(c/tf)*np.ones(n), ell, tf, alpha, w)
+        obj[1, i], _ = eval_shaping(np.zeros(n), weight*(c/tf)*np.ones(n), ell, tf, alpha, w)
+        obj[2, i], _ = eval_shaping(np.zeros(n), (1/n)*(c/tf)*np.ones(n), ell, tf, alpha, w)
+        obj[3, i], _ = eval_shaping(t_opt[i, :], u_opt[i, :], ell, tf, alpha, w)
+        # print("objs=", obj[:,i])
+        # print("used_budget={}, total_budget={}".format(np.dot(tf-t_opt, u_opt), c))
 
     plt.clf()
     plt.plot(budgets, obj[0, :], label="DEG")
@@ -339,7 +340,7 @@ def main():
     np.random.seed(RND_SEED)
     t0 = 0
     tf = 100
-    n = 64
+    n = 8
     sparsity = 0.3
     mu_max = 0.01
     alpha_max = 0.1
