@@ -316,6 +316,7 @@ def shaping_obj_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, ell):
         obj[1, i], unf_int = eval_shaping(np.zeros(n), weight*(c/tf)*np.ones(n), ell, tf, alpha, w)
         obj[2, i], unf_int = eval_shaping(np.zeros(n), (1/n)*(c/tf)*np.ones(n), ell, tf, alpha, w)
         obj[3, i], opt_int = eval_shaping(t_opt[i, :], u_opt[i, :], ell, tf, alpha, w)
+        print()
 
     plt.clf()
     plt.plot(budgets, obj[0, :], label="DEG")
@@ -347,13 +348,14 @@ def main():
     b = 100 * mu_max
     c = n * tf * mu_max
     d = np.ones(n)
-    budgets = c * np.array([0.01, 0.1, 1, 10, 100, 1000])
+    budgets = c * np.array([0.005, 0.01, 0.05, 0.1, 1, 5])
     itr = 1
 
     mu, alpha = generate_model(n, sparsity, mu_max, alpha_max)
 
-    ell = 5 * np.array([0.0250, 0.0250, 0.0500, 0.7500] * int(n / 4))
+    ell = 2 * np.array([0.250, 0.250, 0.500, 0.7500] * int(n / 4))
     ell = ell - np.dot(g_int(0, tf, alpha, w), mu)
+    print(ell)
 
     # mehrdad_eval('./data/mehrdad-64.mat')
 

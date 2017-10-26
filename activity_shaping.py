@@ -17,7 +17,7 @@ from scipy.optimize import least_squares
 import scipy.integrate as integrate
 from event_generation import *
 from activity_maximization import psi
-
+from numpy.linalg import norm
 
 def g(t, tf, alpha, w):
     return psi(tf - t, alpha, w)
@@ -72,13 +72,13 @@ def maximize_shaping(b, c, ell, t0, tf, alpha, w, tol=1e-4):
         raise Exception("spectral radius r={} is greater that w={}".format(r, w))
 
     x_0 = np.append(tf * 0.99 * np.ones(n), b * np.ones(n))
-    res = least_squares(lambda s: sum([s[n+i] * g_int(s[i], tf, alpha, w)[:, i] for i in range(n)]) - ell
-                        + 1e8 * (np.dot(tf - s[:n], s[n:2*n]) > c), x_0,
-                        bounds=(np.zeros(n+n), np.append(100*np.ones(n), b*np.ones(n))),
-                        loss='cauchy', xtol=tol, verbose=1)
+    res = least_squares(lambda s: 1e5 * (np.dot(tf - s[:n], s[n:2*n]) > c) +
+                                  (sum([s[n+i] * g_int(s[i], tf, alpha, w)[:, i] for i in range(n)]) - ell),
+                        x_0, bounds=(np.zeros(n+n), np.append(tf*np.ones(n), b*np.ones(n))), loss='linear', xtol=tol)
     x_opt = res.x
     t_opt = x_opt[:n]
     u_opt = x_opt[n:2*n]
+    print(np.dot(tf - t_opt, u_opt), res.cost)
     return t_opt, u_opt
 
 
@@ -121,20 +121,21 @@ def main():
     np.random.seed(10)
     t0 = 0
     tf = 100
-    n = 16
+    n = 64
     sparsity = 0.3
     mu_max = 0.01
     alpha_max = 0.1
     w = 1
     b = 100 * mu_max
-    c = 1 * n * tf * mu_max
+    c = 0.1 * n * tf * mu_max
 
     mu, alpha = generate_model(n, sparsity, mu_max, alpha_max)
     # alpha = 0.5 * (np.transpose(alpha) + alpha)
 
     # ell = 1 * np.array([0.0250, 0.0250, 0.0500, 0.7500] * int(n/4))
-    ell = 3 * np.array([0.2, 0.4, 0.6, 0.8] * int(n / 4))
+    ell = 2 * np.array([0.2, 0.2, 0.6, 0.8] * int(n / 4))
     ell = ell - np.dot(g_int(0, tf, alpha, w), mu)
+    print(ell)
 
     sio.savemat('./data/pydata-lsq-'+str(n)+'.mat',
                 {'T': tf, 'N': n, 'w': w, 'mu': mu, 'alpha': alpha, 'C': c / tf, 'v': ell})
