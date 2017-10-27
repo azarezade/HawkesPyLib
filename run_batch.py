@@ -13,7 +13,7 @@ import scipy.io as sio
 
 from activity_maximization import maximize_weighted_activity, maximize_int_weighted_activity, eval_weighted_activity, eval_int_weighted_activity
 from event_generation import generate_model, generate_events
-from activity_shaping import eval_shaping, maximize_shaping, g_int
+from activity_shaping import eval_shaping, maximize_shaping, g_max_int
 
 
 def u_deg(t, tf, c, deg):
@@ -361,7 +361,7 @@ def main():
     mu, alpha = generate_model(n, sparsity, mu_max, alpha_max)
 
     ell = 2 * np.array([0.250, 0.250, 0.500, 0.7500] * int(n / 4))
-    ell = ell - np.dot(g_int(0, tf, alpha, w), mu)
+    ell = ell - np.dot(g_max_int(0, tf, alpha, w), mu)
     print(ell)
 
     # mehrdad_eval('./data/mehrdad-64.mat')
