@@ -13,7 +13,7 @@ import scipy.io as sio
 
 from activity_maximization import maximize_weighted_activity, maximize_int_weighted_activity, eval_weighted_activity, eval_int_weighted_activity
 from event_generation import generate_model, generate_events
-from activity_shaping import eval_shaping, maximize_shaping, g_max_int
+from activity_shaping import eval_shaping, maximize_shaping, g_max_int, maximize_int_shaping, eval_int_shaping
 
 
 def u_deg(t, tf, c, deg):
@@ -342,11 +342,56 @@ def shaping_obj_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, ell):
     return
 
 
+def int_shaping_obj_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, ell):
+    deg = np.zeros(n)
+    for j in range(n):
+        deg[j] = np.count_nonzero(alpha[j, :])
+
+    graph = nx.from_numpy_matrix(alpha)
+    pr = nx.pagerank(graph)
+    weight = np.asanyarray(list(pr.values()))
+
+    obj = np.zeros((7, len(budgets)))
+    t_opt = np.zeros((len(budgets), n))
+    u_opt = np.zeros((len(budgets), n))
+    for i in range(len(budgets)):
+        c = budgets[i]
+        t_opt[i, :], u_opt[i, :] = maximize_int_shaping(b, c, ell, t0, tf, alpha, w)
+        c_opt = np.dot(t_opt[i, :], u_opt[i, :])
+        obj[0, i], _ = eval_int_shaping(tf*np.ones(n), (deg / sum(deg)) * (c / tf) * np.ones(n), ell, tf, alpha, w)
+        obj[1, i], _ = eval_int_shaping(tf*np.ones(n), (deg / sum(deg)) * (c_opt / tf) * np.ones(n), ell, tf, alpha, w)
+        obj[2, i], _ = eval_int_shaping(tf*np.ones(n), weight * (c / tf) * np.ones(n), ell, tf, alpha, w)
+        obj[3, i], _ = eval_int_shaping(tf*np.ones(n), weight * (c_opt / tf) * np.ones(n), ell, tf, alpha, w)
+        obj[4, i], _ = eval_int_shaping(tf*np.ones(n), (1 / n) * (c / tf) * np.ones(n), ell, tf, alpha, w)
+        obj[5, i], _ = eval_int_shaping(tf*np.ones(n), (1 / n) * (c_opt / tf) * np.ones(n), ell, tf, alpha, w)
+        obj[6, i], _ = eval_int_shaping(t_opt[i, :], u_opt[i, :], ell, tf, alpha, w)
+        print("used_budget={}, total_budget={}, obj={}".format(np.dot(t_opt[i, :], u_opt[i, :]), c, obj[:,i]))
+
+    plt.clf()
+    plt.plot(budgets, obj[0, :], label="DEG")
+    plt.plot(budgets, obj[1, :], label="DEG2")
+    plt.plot(budgets, obj[2, :], label="PRK")
+    plt.plot(budgets, obj[3, :], label="PRK2")
+    plt.plot(budgets, obj[4, :], label="UNF")
+    plt.plot(budgets, obj[5, :], label="UNF2")
+    plt.plot(budgets, obj[6, :], label="OPT")
+    plt.legend(loc="upper left")
+    plt.savefig('./results/int_shaping_obj_vs_budget.pdf')
+
+    with open('./results/int_shaping_obj_vs_budget.pickle', 'wb') as f:
+        pickle.dump([obj, t_opt, u_opt, budgets, n, mu, alpha, w, t0, tf, b, ell, RND_SEED], f)
+
+    sio.savemat('./results/int_shaping_obj_vs_budget.mat',
+                {'obj': obj, 't_opt': t_opt, 'u_opt': u_opt, 'budget': budgets, 'n': n, 'mu': mu, 'alpha': alpha,
+                 'w': w, 't0': t0, 'tf': tf, 'b': b, 'ell': ell, 'seed': RND_SEED})
+    return
+
+
 def main():
     np.random.seed(RND_SEED)
     t0 = 0
     tf = 100
-    n = 64
+    n = 8
     sparsity = 0.3
     mu_max = 0.01
     alpha_max = 0.1
@@ -372,8 +417,8 @@ def main():
     # events_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, d, itr)
     # int_events_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, d, itr)
 
-    shaping_obj_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, ell)
-
+    # shaping_obj_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, ell)
+    int_shaping_obj_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, ell)
 
 if __name__ == '__main__':
     RND_SEED = 1
