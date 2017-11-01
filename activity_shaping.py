@@ -12,7 +12,7 @@ import scipy.io as sio
 
 from numpy.linalg import inv
 from scipy.linalg import logm, expm
-from scipy.optimize import least_squares
+from scipy.optimize import least_squares, minimize
 import scipy.integrate as integrate
 from event_generation import *
 from activity_maximization import psi
@@ -57,8 +57,8 @@ def g_ls_int(t, tf, alpha, w):
     I = np.eye(n)
     alpha_w = alpha - w * I
     alpha_w_inv = inv(alpha_w)
-    return alpha.dot(alpha_w_inv).dot(alpha_w_inv).dot(expm(alpha_w * (tf - t)) - expm(alpha_w * tf)) \
-           + (I - I.dot(alpha)) * t
+    alpha_w_inv2 = alpha_w_inv.dot(alpha_w_inv)
+    return (I - alpha.dot(alpha_w_inv)) * t - alpha.dot(alpha_w_inv2).dot(expm(alpha_w * (tf - t)) - expm(alpha_w * tf))
 
 
 def maximize_shaping(b, c, ell, t0, tf, alpha, w, tol=1e-4):
@@ -91,15 +91,34 @@ def maximize_int_shaping(b, c, ell, t0, tf, alpha, w, tol=1e-5):
     if r > w:
         raise Exception("spectral radius r={} is greater that w={}".format(r, w))
 
-    x_0 = np.append(tf * 0.1 * np.ones(n), b * np.ones(n))
+    x_0 = np.append(tf * 0.05 * np.ones(n), b * np.ones(n))
     g_ls_0 = g_ls(0, tf, alpha, w)
+
     res = least_squares(lambda s: 1e5 * (np.dot(s[:n], s[n:2*n]) > c) +
                         (sum([s[n+i] * s[i] * g_ls_0[:, i] for i in range(n)]) - ell), x_0,
                         bounds=(np.zeros(n+n), np.append(tf*np.ones(n), b*np.ones(n))), loss='linear')
+
+    # res = least_squares(lambda s: 1e5 * (np.dot(s[:n], s[n:2 * n]) > c) +
+    #                               (sum([s[n + i] * g_ls_int(s[i], tf, alpha, w)[:, i] for i in range(n)]) - ell), x_0,
+    #                     bounds=(np.zeros(n + n), np.append(tf * np.ones(n), b * np.ones(n))), loss='linear')
+
+    # bnds = [(0,tf*(i<n)+b*(i>=n)) for i in range(2*n)]
+    # cons = ({'type': 'ineq', 'fun': lambda s: - np.dot(s[:n], s[n:2*n]) + c})
+    # res = minimize(lambda s: norm((sum([s[n+i] * s[i] * g_ls_0[:, i] for i in range(n)]) - ell))**2,
+    #                x_0, method = 'SLSQP', bounds=bnds, constraints=cons, options = {'disp': True})
+
     x_opt = res.x
     t_opt = x_opt[:n]
     u_opt = x_opt[n:2*n]
     return t_opt, u_opt
+
+    # x_0 = tf * 0.1 * np.ones(n)
+    # res = least_squares(lambda s: 1e5 * (np.sum(s) > c) +
+    #                               (sum([s[i] * g_ls_0[:, i] for i in range(n)]) - ell), x_0,
+    #                     bounds=(np.zeros(n), b * tf * np.ones(n)), loss='linear')
+    # x_opt = res.x
+    # return x_opt
+
 
 
 def eval_shaping(s, u, ell, tf, alpha, w):
@@ -107,7 +126,7 @@ def eval_shaping(s, u, ell, tf, alpha, w):
     """
         Evaluate the least square objective for control intensity with i'th element:
         u[i] * ( t > s[i])
-        """
+    """
     n = alpha.shape[0]
     I = np.eye(n)
     Aw = alpha - w * I
@@ -139,16 +158,16 @@ def eval_int_shaping(s, u, ell, tf, alpha, w):
 
 
 def main():
-    np.random.seed(1)
+    np.random.seed(9)
     t0 = 0
     tf = 100
-    n = 32
+    n = 64
     sparsity = 0.3
     mu_max = 0.01
     alpha_max = 0.1
-    w = 1
+    w = 2
     b = 100 * mu_max
-    c = 5 * n * tf * mu_max
+    c = 8 * n * tf * mu_max
 
     mu, alpha = generate_model(n, sparsity, mu_max, alpha_max)
     # alpha = 0.5 * (np.transpose(alpha) + alpha)
@@ -164,8 +183,9 @@ def main():
     # print("opt_t = {}, \n opt_u = {}".format(t_opt, u_opt))
     # print("opt_budget = {}, c = {}".format(np.dot(tf - t_opt, u_opt), c))
 
-    ell = 10 * np.array([0.2, 0.2, 0.6, 0.8] * int(n / 4))
-    ell = ell - np.dot(g_ls_int(tf, tf, alpha, w), mu)
+    ell = 10 * np.array([0.2, 0.4, 0.6, 0.8] * int(n / 4))
+    # # ell = ell - np.dot(g_ls_int(tf, tf, alpha, w), mu)
+    # # print(ell)
     t_opt, u_opt = maximize_int_shaping(b, c, ell, t0, tf, alpha, w)
     obj_opt, int_opt = eval_int_shaping(t_opt, u_opt, ell, tf, alpha, w)
     obj_unf, int_unf = eval_int_shaping(tf*np.ones(n), c / (n * tf) * np.ones(n), ell, tf, alpha, w)
@@ -174,6 +194,15 @@ def main():
     print("int_opt = {} \n  int_unf = {},".format(int_opt, int_unf))
     print("opt_t = {}, \n opt_u = {}".format(t_opt, u_opt))
     print("opt_budget = {}, c = {}".format(np.dot(t_opt, u_opt), c))
+
+    # x_opt = maximize_int_shaping(b, c, ell, t0, tf, alpha, w)
+    # obj_opt, int_opt = eval_int_shaping(x_opt/0.1, 0.1*np.ones(n), ell, tf, alpha, w)
+    # obj_unf, int_unf = eval_int_shaping(tf * np.ones(n), c / (n * tf) * np.ones(n), ell, tf, alpha, w)
+    # print("obj_opt = {}, obj_unf = {}".format(obj_opt, obj_unf))
+    # print("ell = {}".format(ell))
+    # print("int_opt = {} \n  int_unf = {},".format(int_opt, int_unf))
+    # print("opt_t = {}".format(x_opt))
+    # print("opt_budget = {}, c = {}".format(sum(x_opt), c))
 
     # t = np.arange(0, tf, 2)
     # y = np.zeros((n, len(t)))
