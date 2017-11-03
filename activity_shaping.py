@@ -94,9 +94,9 @@ def maximize_int_shaping(b, c, ell, t0, tf, alpha, w, tol=1e-5):
     x_0 = np.append(tf * 0.05 * np.ones(n), b * np.ones(n))
     g_ls_0 = g_ls(0, tf, alpha, w)
 
-    res = least_squares(lambda s: 1e5 * (np.dot(s[:n], s[n:2*n]) > c) +
-                        (sum([s[n+i] * s[i] * g_ls_0[:, i] for i in range(n)]) - ell), x_0,
-                        bounds=(np.zeros(n+n), np.append(tf*np.ones(n), b*np.ones(n))), loss='linear')
+    # res = least_squares(lambda s: 1e5 * (np.dot(s[:n], s[n:2*n]) > c) +
+    #                     (sum([s[n+i] * s[i] * g_ls_0[:, i] for i in range(n)]) - ell), x_0,
+    #                     bounds=(np.zeros(n+n), np.append(tf*np.ones(n), b*np.ones(n))), loss='linear')
 
     # res = least_squares(lambda s: 1e5 * (np.dot(s[:n], s[n:2 * n]) > c) +
     #                               (sum([s[n + i] * g_ls_int(s[i], tf, alpha, w)[:, i] for i in range(n)]) - ell), x_0,
@@ -107,17 +107,17 @@ def maximize_int_shaping(b, c, ell, t0, tf, alpha, w, tol=1e-5):
     # res = minimize(lambda s: norm((sum([s[n+i] * s[i] * g_ls_0[:, i] for i in range(n)]) - ell))**2,
     #                x_0, method = 'SLSQP', bounds=bnds, constraints=cons, options = {'disp': True})
 
-    x_opt = res.x
-    t_opt = x_opt[:n]
-    u_opt = x_opt[n:2*n]
-    return t_opt, u_opt
-
-    # x_0 = tf * 0.1 * np.ones(n)
-    # res = least_squares(lambda s: 1e5 * (np.sum(s) > c) +
-    #                               (sum([s[i] * g_ls_0[:, i] for i in range(n)]) - ell), x_0,
-    #                     bounds=(np.zeros(n), b * tf * np.ones(n)), loss='linear')
     # x_opt = res.x
-    # return x_opt
+    # t_opt = x_opt[:n]
+    # u_opt = x_opt[n:2*n]
+    # return t_opt, u_opt
+
+    x_0 = tf * 0.1 * np.ones(n)
+    res = least_squares(lambda s: 1e5 * (np.sum(s) > c) +
+                                  (sum([s[i] * g_ls_0[:, i] for i in range(n)]) - ell), x_0,
+                        bounds=(np.zeros(n), b * tf * np.ones(n)), loss='linear')
+    x_opt = res.x
+    return x_opt
 
 
 
@@ -186,23 +186,23 @@ def main():
     ell = 10 * np.array([0.2, 0.4, 0.6, 0.8] * int(n / 4))
     # # ell = ell - np.dot(g_ls_int(tf, tf, alpha, w), mu)
     # # print(ell)
-    t_opt, u_opt = maximize_int_shaping(b, c, ell, t0, tf, alpha, w)
-    obj_opt, int_opt = eval_int_shaping(t_opt, u_opt, ell, tf, alpha, w)
-    obj_unf, int_unf = eval_int_shaping(tf*np.ones(n), c / (n * tf) * np.ones(n), ell, tf, alpha, w)
-    print("obj_opt = {}, obj_unf = {}".format(obj_opt, obj_unf))
-    print("ell = {}".format(ell))
-    print("int_opt = {} \n  int_unf = {},".format(int_opt, int_unf))
-    print("opt_t = {}, \n opt_u = {}".format(t_opt, u_opt))
-    print("opt_budget = {}, c = {}".format(np.dot(t_opt, u_opt), c))
-
-    # x_opt = maximize_int_shaping(b, c, ell, t0, tf, alpha, w)
-    # obj_opt, int_opt = eval_int_shaping(x_opt/0.1, 0.1*np.ones(n), ell, tf, alpha, w)
-    # obj_unf, int_unf = eval_int_shaping(tf * np.ones(n), c / (n * tf) * np.ones(n), ell, tf, alpha, w)
+    # t_opt, u_opt = maximize_int_shaping(b, c, ell, t0, tf, alpha, w)
+    # obj_opt, int_opt = eval_int_shaping(t_opt, u_opt, ell, tf, alpha, w)
+    # obj_unf, int_unf = eval_int_shaping(tf*np.ones(n), c / (n * tf) * np.ones(n), ell, tf, alpha, w)
     # print("obj_opt = {}, obj_unf = {}".format(obj_opt, obj_unf))
     # print("ell = {}".format(ell))
     # print("int_opt = {} \n  int_unf = {},".format(int_opt, int_unf))
-    # print("opt_t = {}".format(x_opt))
-    # print("opt_budget = {}, c = {}".format(sum(x_opt), c))
+    # print("opt_t = {}, \n opt_u = {}".format(t_opt, u_opt))
+    # print("opt_budget = {}, c = {}".format(np.dot(t_opt, u_opt), c))
+
+    x_opt = maximize_int_shaping(b, c, ell, t0, tf, alpha, w)
+    obj_opt, int_opt = eval_int_shaping(x_opt/0.1, 0.1*np.ones(n), ell, tf, alpha, w)
+    obj_unf, int_unf = eval_int_shaping(tf * np.ones(n), c / (n * tf) * np.ones(n), ell, tf, alpha, w)
+    print("obj_opt = {}, obj_unf = {}".format(obj_opt, obj_unf))
+    print("ell = {}".format(ell))
+    print("int_opt = {} \n  int_unf = {},".format(int_opt, int_unf))
+    print("opt_x = {}".format(x_opt))
+    print("opt_budget = {}, c = {}".format(sum(x_opt), c))
 
     # t = np.arange(0, tf, 2)
     # y = np.zeros((n, len(t)))

@@ -342,6 +342,54 @@ def shaping_obj_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, ell):
     return
 
 
+def shaping_events_vs_budget(budget, n, mu, alpha, w, t0, tf, b, ell, itr):
+    deg = np.zeros(n)
+    for j in range(n):
+        deg[j] = np.count_nonzero(alpha[j, :])
+
+    graph = nx.from_numpy_matrix(alpha)
+    pr = nx.pagerank(graph)
+    weight = np.asanyarray(list(pr.values()))
+
+    event_num = np.zeros([5, len(budget), itr])
+    t_opt = np.zeros((len(budget), n))
+    u_opt = np.zeros((len(budget), n))
+    for i in range(len(budget)):
+        c = budget[i]
+        t_opt[i, :], u_opt[i, :] = maximize_shaping(b, c, ell, t0, tf, alpha, w)
+
+        for j in range(itr):
+            times_deg, _ = generate_events(t0, tf, mu, alpha, lambda t: u_deg(t, tf, c, deg))
+            times_prk, _ = generate_events(t0, tf, mu, alpha, lambda t: u_prk(t, tf, c, weight))
+            times_uniform, _ = generate_events(t0, tf, mu, alpha, lambda t: u_unf(t, tf, c, n))
+            times_optimal, _ = generate_events(t0, tf, mu, alpha, lambda t: [u_opt[i,k] * (t > t_opt[i,k]) for k in range(n)])
+            times_unc, _ = generate_events(t0, tf, mu, alpha)
+            event_num[0, i, j] = len(times_deg)
+            event_num[1, i, j] = len(times_prk)
+            event_num[2, i, j] = len(times_uniform)
+            event_num[3, i, j] = len(times_optimal)
+            event_num[4, i, j] = len(times_unc)
+
+    event_num_mean = np.mean(event_num, axis=2)
+
+    plt.clf()
+    plt.plot(budget, event_num_mean[0, :], marker='.', label="DEG")
+    plt.plot(budget, event_num_mean[1, :], marker='.', label="PRK")
+    plt.plot(budget, event_num_mean[2, :], marker='.', label="UNF")
+    plt.plot(budget, event_num_mean[3, :], marker='.', label="OPT")
+    plt.plot(budget, event_num_mean[4, :], marker='.', label="UNC")
+    plt.legend(loc="lower right")
+    plt.savefig('./results/shaping_events_vs_budget.pdf')
+
+    with open('./results/shaping_events_vs_budget.pickle', 'wb') as f:
+        pickle.dump([event_num, t_opt, deg, weight, budget, n, mu, alpha, w, t0, tf, b, ell, itr, RND_SEED], f)
+
+    sio.savemat('./results/shaping_events_vs_budget.mat',
+                {'event_num': event_num, 't_opt': t_opt, 'deg': deg, 'weight': weight, 'budget': budget,
+                 'n': n, 'mu': mu, 'alpha': alpha, 'w': w, 't0': t0, 'tf': tf, 'b': b, 'ell': ell, 'seed': RND_SEED})
+    return
+
+
 def int_shaping_obj_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, ell):
     deg = np.zeros(n)
     for j in range(n):
@@ -401,7 +449,7 @@ def main():
     c = n * tf * mu_max
     d = np.ones(n)
     budgets = c * np.array([0.01, 0.05, 0.15, 0.2, 0.25, 0.3])
-    itr = 1
+    itr = 2
 
     mu, alpha = generate_model(n, sparsity, mu_max, alpha_max)
 
@@ -418,7 +466,9 @@ def main():
     # int_events_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, d, itr)
 
     # shaping_obj_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, ell)
-    int_shaping_obj_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, ell)
+    # int_shaping_obj_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, ell)
+    shaping_events_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, ell, itr)
+
 
 if __name__ == '__main__':
     RND_SEED = 1
