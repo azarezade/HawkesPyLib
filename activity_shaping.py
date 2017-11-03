@@ -117,7 +117,9 @@ def maximize_int_shaping(b, c, ell, t0, tf, alpha, w, tol=1e-5):
                                   (sum([s[i] * g_ls_0[:, i] for i in range(n)]) - ell), x_0,
                         bounds=(np.zeros(n), b * tf * np.ones(n)), loss='linear')
     x_opt = res.x
-    return x_opt
+    t_opt = 10 * np.ones(n)
+    u_opt = x_opt / 10
+    return t_opt, u_opt
 
 
 
@@ -186,23 +188,23 @@ def main():
     ell = 10 * np.array([0.2, 0.4, 0.6, 0.8] * int(n / 4))
     # # ell = ell - np.dot(g_ls_int(tf, tf, alpha, w), mu)
     # # print(ell)
-    # t_opt, u_opt = maximize_int_shaping(b, c, ell, t0, tf, alpha, w)
-    # obj_opt, int_opt = eval_int_shaping(t_opt, u_opt, ell, tf, alpha, w)
-    # obj_unf, int_unf = eval_int_shaping(tf*np.ones(n), c / (n * tf) * np.ones(n), ell, tf, alpha, w)
-    # print("obj_opt = {}, obj_unf = {}".format(obj_opt, obj_unf))
-    # print("ell = {}".format(ell))
-    # print("int_opt = {} \n  int_unf = {},".format(int_opt, int_unf))
-    # print("opt_t = {}, \n opt_u = {}".format(t_opt, u_opt))
-    # print("opt_budget = {}, c = {}".format(np.dot(t_opt, u_opt), c))
-
-    x_opt = maximize_int_shaping(b, c, ell, t0, tf, alpha, w)
-    obj_opt, int_opt = eval_int_shaping(x_opt/0.1, 0.1*np.ones(n), ell, tf, alpha, w)
-    obj_unf, int_unf = eval_int_shaping(tf * np.ones(n), c / (n * tf) * np.ones(n), ell, tf, alpha, w)
+    t_opt, u_opt = maximize_int_shaping(b, c, ell, t0, tf, alpha, w)
+    obj_opt, int_opt = eval_int_shaping(t_opt, u_opt, ell, tf, alpha, w)
+    obj_unf, int_unf = eval_int_shaping(tf*np.ones(n), c / (n * tf) * np.ones(n), ell, tf, alpha, w)
     print("obj_opt = {}, obj_unf = {}".format(obj_opt, obj_unf))
     print("ell = {}".format(ell))
     print("int_opt = {} \n  int_unf = {},".format(int_opt, int_unf))
-    print("opt_x = {}".format(x_opt))
-    print("opt_budget = {}, c = {}".format(sum(x_opt), c))
+    print("opt_t = {}, \n opt_u = {}".format(t_opt, u_opt))
+    print("opt_budget = {}, c = {}".format(np.dot(t_opt, u_opt), c))
+
+    # x_opt = maximize_int_shaping(b, c, ell, t0, tf, alpha, w)
+    # obj_opt, int_opt = eval_int_shaping(x_opt/0.1, 0.1*np.ones(n), ell, tf, alpha, w)
+    # obj_unf, int_unf = eval_int_shaping(tf * np.ones(n), c / (n * tf) * np.ones(n), ell, tf, alpha, w)
+    # print("obj_opt = {}, obj_unf = {}".format(obj_opt, obj_unf))
+    # print("ell = {}".format(ell))
+    # print("int_opt = {} \n  int_unf = {},".format(int_opt, int_unf))
+    # print("opt_x = {}".format(x_opt))
+    # print("opt_budget = {}, c = {}".format(sum(x_opt), c))
 
     # t = np.arange(0, tf, 2)
     # y = np.zeros((n, len(t)))
