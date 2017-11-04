@@ -44,6 +44,14 @@ def count_events(times, a, b):
     return k
 
 
+def count_user_events(times, users, n, a, b):
+    count = np.zeros(n)
+    for i in range(len(times)):
+        if a < times[i] < b:
+            count[users[i]] += 1
+    return count
+
+
 def events_vs_time(c, n, mu, alpha, w, t0, tf, b, d):
     deg = np.zeros(n)
     for j in range(n):
@@ -359,27 +367,18 @@ def shaping_events_vs_budget(budget, n, mu, alpha, w, t0, tf, b, ell, itr):
         t_opt[i, :], u_opt[i, :] = maximize_shaping(b, c, ell, t0, tf, alpha, w)
 
         for j in range(itr):
-            times_deg, _ = generate_events(t0, tf, mu, alpha, lambda t: u_deg(t, tf, c, deg))
-            times_prk, _ = generate_events(t0, tf, mu, alpha, lambda t: u_prk(t, tf, c, weight))
-            times_uniform, _ = generate_events(t0, tf, mu, alpha, lambda t: u_unf(t, tf, c, n))
-            times_optimal, _ = generate_events(t0, tf, mu, alpha, lambda t: [u_opt[i,k] * (t > t_opt[i,k]) for k in range(n)])
-            times_unc, _ = generate_events(t0, tf, mu, alpha)
-            event_num[0, i, j] = len(times_deg)
-            event_num[1, i, j] = len(times_prk)
-            event_num[2, i, j] = len(times_uniform)
-            event_num[3, i, j] = len(times_optimal)
-            event_num[4, i, j] = len(times_unc)
+            times_deg, users_deg = generate_events(t0, tf, mu, alpha, lambda t: u_deg(t, tf, c, deg))
+            times_prk, users_prk = generate_events(t0, tf, mu, alpha, lambda t: u_prk(t, tf, c, weight))
+            times_unf, users_unf = generate_events(t0, tf, mu, alpha, lambda t: u_unf(t, tf, c, n))
+            times_opt, users_opt = generate_events(t0, tf, mu, alpha, lambda t: [u_opt[i,k] * (t > t_opt[i,k]) for k in range(n)])
+            times_unc, users_unc = generate_events(t0, tf, mu, alpha)
+            event_num[0, i, :] = event_num[0, i, :] + count_user_events(times_deg, users_deg, n, tf-1, tf)
+            event_num[1, i, :] = event_num[1, i, :] + count_user_events(times_prk, users_prk, n, tf-1, tf)
+            event_num[2, i, :] = event_num[2, i, :] + count_user_events(times_unf, users_unf, n, tf-1, tf)
+            event_num[3, i, :] = event_num[3, i, :] + count_user_events(times_opt, users_opt, n, tf-1, tf)
+            event_num[4, i, :] = event_num[4, i, :] + count_user_events(times_unc, users_unc, n, tf-1, tf)
 
-    event_num_mean = np.mean(event_num, axis=2)
-
-    plt.clf()
-    plt.plot(budget, event_num_mean[0, :], marker='.', label="DEG")
-    plt.plot(budget, event_num_mean[1, :], marker='.', label="PRK")
-    plt.plot(budget, event_num_mean[2, :], marker='.', label="UNF")
-    plt.plot(budget, event_num_mean[3, :], marker='.', label="OPT")
-    plt.plot(budget, event_num_mean[4, :], marker='.', label="UNC")
-    plt.legend(loc="lower right")
-    plt.savefig('./results/shaping_events_vs_budget.pdf')
+        event_num[:, i, :] = event_num[:, i, :] / itr
 
     with open('./results/shaping_events_vs_budget.pickle', 'wb') as f:
         pickle.dump([event_num, t_opt, deg, weight, budget, n, mu, alpha, w, t0, tf, b, ell, itr, RND_SEED], f)
