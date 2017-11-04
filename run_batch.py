@@ -359,7 +359,7 @@ def shaping_events_vs_budget(budget, n, mu, alpha, w, t0, tf, b, ell, itr):
     pr = nx.pagerank(graph)
     weight = np.asanyarray(list(pr.values()))
 
-    event_num = np.zeros([5, len(budget), itr])
+    event_num = np.zeros([5, len(budget), n])
     t_opt = np.zeros((len(budget), n))
     u_opt = np.zeros((len(budget), n))
     for i in range(len(budget)):
