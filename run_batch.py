@@ -10,7 +10,7 @@ import networkx as nx
 import matplotlib as mpl; mpl.use('Agg')
 import matplotlib.pyplot as plt
 import scipy.io as sio
-from numpy.linalg import inv
+from numpy.linalg import inv, norm
 from activity_maximization import maximize_weighted_activity, maximize_int_weighted_activity, eval_weighted_activity, eval_int_weighted_activity
 from event_generation import generate_model, generate_events
 from activity_shaping import eval_shaping, maximize_shaping, g_max_int, maximize_int_shaping, eval_int_shaping
@@ -466,14 +466,16 @@ def int_shaping_events_vs_budget(budget, n, mu, alpha, w, t0, tf, b, ell, itr):
             event_num[4, i, :] += count_user_events(times_unc, users_unc, n, 0, tf)
         event_num[:, i, :] = event_num[:, i, :] / itr
 
-        for k in range(4):
-            residual[k, i, :] = event_num[k, i, :] - ell
+    obj = np.zeros((5, len(budget)))
+    for i in range(5):
+        for j in range(len(budget)):
+            obj[i, j] = norm(event_num[i, j, :] - ell)
 
     with open('./results/int_shaping_events_vs_budget.pickle', 'wb') as f:
-        pickle.dump([event_num, residual, t_opt, deg, weight, budget, n, mu, alpha, w, t0, tf, b, ell, itr, RND_SEED], f)
+        pickle.dump([event_num, obj, t_opt, u_opt, deg, weight, budget, n, mu, alpha, w, t0, tf, b, ell, itr, RND_SEED], f)
 
     sio.savemat('./results/int_shaping_events_vs_budget.mat',
-                {'event_num': event_num, 'residual': residual, 't_opt': t_opt, 'deg': deg, 'weight': weight, 'budget': budget,
+                {'event_num': event_num, 'obj': obj, 't_opt': t_opt, 'u_opt': u_opt, 'deg': deg, 'weight': weight, 'budget': budget,
                  'n': n, 'mu': mu, 'alpha': alpha, 'w': w, 't0': t0, 'tf': tf, 'b': b, 'ell': ell, 'seed': RND_SEED})
     return
 
@@ -491,18 +493,17 @@ def main():
     b = 100 * mu_max
     c = n * tf * mu_max
     d = np.ones(n)
-    # budgets = c * np.array([0.01, 0.05, 0.15, 0.2, 0.25, 0.3])
+
     budgets = np.array([0.5, 10, 20, 50, 100, 150, 200, 250])
-    # itr = 30
-    # budgets = np.array([0.5, 100])
-    itr = 3
+    itr = 20
 
     mu, alpha = generate_model(n, sparsity, mu_max, alpha_max)
 
-    ell = 10 * np.array([0.250, 0.250, 0.500, 0.7500] * int(n / 4))
-    ell = ell - (np.eye(n) - alpha.dot(inv(alpha-2*np.eye(n)))).dot(mu)*100
-    # ell = 6 * np.array([0.250, 0.250, 0.500, 0.7500] * int(n / 4))
-    print(ell)
+    ell = 7 * np.array([0.250, 0.250, 0.500, 0.7500] * int(n / 4))
+    base_activity = (np.eye(n) - alpha.dot(inv(alpha - w * np.eye(n)))).dot(mu) * tf
+    ell = ell - base_activity
+    if any([ell[i] < 0 for i in range(len(ell))]):
+        raise Exception("ell={} has negative element".format(ell))
 
     # mehrdad_eval('./data/mehrdad-64.mat')
 
@@ -515,7 +516,7 @@ def main():
     # shaping_obj_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, ell)
     # shaping_events_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, ell, itr)
     int_shaping_obj_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, ell)
-    # int_shaping_events_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, ell, itr)
+    int_shaping_events_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, ell, itr)
 
 
 if __name__ == '__main__':
