@@ -480,6 +480,34 @@ def int_shaping_events_vs_budget(budget, n, mu, alpha, w, t0, tf, b, ell, itr):
     return
 
 
+def max_int_events_vs_time(budget, n, mu, alpha, w, t0, tf, b, d, itr):
+    deg = np.zeros(n)
+    for j in range(n):
+        deg[j] = np.count_nonzero(alpha[j, :])
+
+    graph = nx.from_numpy_matrix(alpha)
+    pr = nx.pagerank(graph)
+    weight = np.asanyarray(list(pr.values()))
+
+    times = np.zeros([5, itr], dtype=object)
+    users = np.zeros([5, itr], dtype=object)
+    t_opt = maximize_int_weighted_activity(b, budget, d, t0, tf, alpha, w)
+    for i in range(itr):
+        times[0,i], users[0,i] = generate_events(t0, tf, mu, alpha, lambda t: u_opt_dec(t, t_opt, n, b))
+        times[1,i], users[1,i] = generate_events(t0, tf, mu, alpha, lambda t: u_unf(t, tf, budget, n))
+        times[2,i], users[2,i] = generate_events(t0, tf, mu, alpha, lambda t: u_deg(t, tf, budget, deg))
+        times[3,i], users[3,i] = generate_events(t0, tf, mu, alpha, lambda t: u_prk(t, tf, budget, weight))
+        times[4,i], users[4,i] = generate_events(t0, tf, mu, alpha)
+
+    with open('./results/max_int_events_vs_time.pickle', 'wb') as f:
+        pickle.dump([t_opt, times, users, deg, weight, budget, n, mu, alpha, w, t0, tf, b, d, itr, RND_SEED], f)
+
+    sio.savemat('./results/max_int_events_vs_time.mat',
+                {'t_opt': t_opt, 'times': times, 'users': users, 'deg': deg, 'weight': weight, 'budget': budget,
+                 'n': n, 'mu': mu, 'alpha': alpha, 'w': w, 't0': t0, 'tf': tf, 'b': b, 'd': d, 'seed': RND_SEED})
+    return
+
+
 def main():
     np.random.seed(RND_SEED)
     t0 = 0
@@ -488,7 +516,7 @@ def main():
     sparsity = 0.3
     mu_max = 0.01
     alpha_max = 0.1
-    w = 2
+    w = 1
 
     b = 100 * mu_max
     c = n * tf * mu_max
@@ -515,10 +543,11 @@ def main():
 
     # shaping_obj_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, ell)
     # shaping_events_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, ell, itr)
-    int_shaping_obj_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, ell)
-    int_shaping_events_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, ell, itr)
+    # int_shaping_obj_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, ell)
+    # int_shaping_events_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, ell, itr)
 
+    max_int_events_vs_time(budgets[-1], n, mu, alpha, w, t0, tf, b, d, itr)
 
 if __name__ == '__main__':
-    RND_SEED = 1
+    RND_SEED = 4
     main()
