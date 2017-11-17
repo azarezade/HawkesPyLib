@@ -435,6 +435,7 @@ def int_shaping_obj_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, ell):
 
 
 def int_shaping_events_vs_budget(budget, n, mu, alpha, w, t0, tf, b, ell, itr):
+    base_activity = (np.eye(n) - alpha.dot(inv(alpha - w * np.eye(n)))).dot(mu) * tf
     deg = np.zeros(n)
     for k in range(n):
         deg[k] = np.count_nonzero(alpha[k, :])
@@ -469,7 +470,7 @@ def int_shaping_events_vs_budget(budget, n, mu, alpha, w, t0, tf, b, ell, itr):
     obj = np.zeros((5, len(budget)))
     for i in range(5):
         for j in range(len(budget)):
-            obj[i, j] = norm(event_num[i, j, :] - ell)**2
+            obj[i, j] = norm(event_num[i, j, :] - (ell + base_activity))**2
 
     with open('./results/int_shaping_events_vs_budget.pickle', 'wb') as f:
         pickle.dump([event_num, obj, t_opt, u_opt, deg, weight, budget, n, mu, alpha, w, t0, tf, b, ell, itr, RND_SEED], f)
@@ -544,9 +545,9 @@ def main():
     # shaping_obj_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, ell)
     # shaping_events_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, ell, itr)
     # int_shaping_obj_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, ell)
-    # int_shaping_events_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, ell, itr)
+    int_shaping_events_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, ell, itr)
 
-    max_int_events_vs_time(budgets[-1], n, mu, alpha, w, t0, tf, b, d, itr)
+    # max_int_events_vs_time(budgets[-1], n, mu, alpha, w, t0, tf, b, d, itr)
 
 if __name__ == '__main__':
     RND_SEED = 4
