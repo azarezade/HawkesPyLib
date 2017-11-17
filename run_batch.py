@@ -469,7 +469,7 @@ def int_shaping_events_vs_budget(budget, n, mu, alpha, w, t0, tf, b, ell, itr):
     obj = np.zeros((5, len(budget)))
     for i in range(5):
         for j in range(len(budget)):
-            obj[i, j] = norm(event_num[i, j, :] - ell)
+            obj[i, j] = norm(event_num[i, j, :] - ell)**2
 
     with open('./results/int_shaping_events_vs_budget.pickle', 'wb') as f:
         pickle.dump([event_num, obj, t_opt, u_opt, deg, weight, budget, n, mu, alpha, w, t0, tf, b, ell, itr, RND_SEED], f)
