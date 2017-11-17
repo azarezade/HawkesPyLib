@@ -450,7 +450,7 @@ def int_shaping_events_vs_budget(budget, n, mu, alpha, w, t0, tf, b, ell, itr):
     u_opt = np.zeros((len(budget), n))
     for i in range(len(budget)):
         c = budget[i]
-        t_opt[i, :], u_opt[i, :] = maximize_int_shaping(b, c, ell, t0, tf, alpha, w)
+        t_opt[i, :], u_opt[i, :] = maximize_int_shaping(b, c, ell-base_activity, t0, tf, alpha, w)
         # c_opt = np.dot(t_opt[i, :], u_opt[i, :])
 
         for k in range(itr):
@@ -470,7 +470,7 @@ def int_shaping_events_vs_budget(budget, n, mu, alpha, w, t0, tf, b, ell, itr):
     obj = np.zeros((5, len(budget)))
     for i in range(5):
         for j in range(len(budget)):
-            obj[i, j] = norm(event_num[i, j, :] - (ell + base_activity))**2
+            obj[i, j] = norm(event_num[i, j, :] - ell)**2
 
     with open('./results/int_shaping_events_vs_budget.pickle', 'wb') as f:
         pickle.dump([event_num, obj, t_opt, u_opt, deg, weight, budget, n, mu, alpha, w, t0, tf, b, ell, itr, RND_SEED], f)
@@ -530,8 +530,8 @@ def main():
 
     ell = 7 * np.array([0.250, 0.250, 0.500, 0.7500] * int(n / 4))
     base_activity = (np.eye(n) - alpha.dot(inv(alpha - w * np.eye(n)))).dot(mu) * tf
-    ell = ell - base_activity
-    if any([ell[i] < 0 for i in range(len(ell))]):
+    # ell = ell - base_activity
+    if any([ell[i] - base_activity[i] < 0 for i in range(len(ell))]):
         raise Exception("ell={} has negative element".format(ell))
 
     # mehrdad_eval('./data/mehrdad-64.mat')
