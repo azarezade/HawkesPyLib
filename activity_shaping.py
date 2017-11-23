@@ -58,7 +58,7 @@ def g_ls_int(t, tf, alpha, w):
     alpha_w = alpha - w * I
     alpha_w_inv = inv(alpha_w)
     alpha_w_inv2 = alpha_w_inv.dot(alpha_w_inv)
-    return (I - alpha.dot(alpha_w_inv)) * t - alpha.dot(alpha_w_inv2).dot(expm(alpha_w * (tf - t)) - expm(alpha_w * tf))
+    return (I - alpha.dot(alpha_w_inv)) * t + alpha.dot(alpha_w_inv2).dot(expm(alpha_w * tf) - expm(alpha_w * (tf - t)))
 
 
 def maximize_shaping(b, c, ell, t0, tf, alpha, w, tol=1e-4):

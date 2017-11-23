@@ -13,7 +13,7 @@ import scipy.io as sio
 from numpy.linalg import inv, norm
 from activity_maximization import maximize_weighted_activity, maximize_int_weighted_activity, eval_weighted_activity, eval_int_weighted_activity
 from event_generation import generate_model, generate_events
-from activity_shaping import eval_shaping, maximize_shaping, g_max_int, maximize_int_shaping, eval_int_shaping
+from activity_shaping import eval_shaping, maximize_shaping, g_ls_int, maximize_int_shaping, eval_int_shaping
 
 
 def u_deg(t, tf, c, deg):
@@ -434,8 +434,7 @@ def int_shaping_obj_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, ell):
     return
 
 
-def int_shaping_events_vs_budget(budget, n, mu, alpha, w, t0, tf, b, ell, itr):
-    base_activity = (np.eye(n) - alpha.dot(inv(alpha - w * np.eye(n)))).dot(mu) * tf
+def int_shaping_events_vs_budget(budget, n, mu, alpha, w, t0, tf, b, ell, base_activity, itr):
     deg = np.zeros(n)
     for k in range(n):
         deg[k] = np.count_nonzero(alpha[k, :])
@@ -445,7 +444,6 @@ def int_shaping_events_vs_budget(budget, n, mu, alpha, w, t0, tf, b, ell, itr):
     weight = np.asanyarray(list(pr.values()))
 
     event_num = np.zeros([5, len(budget), n])
-    residual = np.zeros([5, len(budget), n])
     t_opt = np.zeros((len(budget), n))
     u_opt = np.zeros((len(budget), n))
     for i in range(len(budget)):
@@ -517,24 +515,20 @@ def main():
     sparsity = 0.3
     mu_max = 0.01
     alpha_max = 0.1
-    w = 2
+    w = 1
 
     b = 100 * mu_max
     c = n * tf * mu_max
     d = np.ones(n)
 
-    # budgets = np.array([0.5, 10, 20, 50, 100, 150, 200, 250])
-    # itr = 20
-    budgets = np.array([250])
-    itr = 1
+    budgets = np.array([0.5, 10, 20, 50, 100, 150, 200, 250])
+    itr = 20
 
     mu, alpha = generate_model(n, sparsity, mu_max, alpha_max)
 
     ell = 6 * np.array([0.250, 0.250, 0.500, 0.7500] * int(n / 4))
-    base_activity = (np.eye(n) - alpha.dot(inv(alpha - w * np.eye(n)))).dot(mu) * tf
+    base_activity = g_ls_int(tf, tf, alpha, w).dot(mu)
     ell = ell + base_activity
-    # if any([ell[i] - base_activity[i] < 0 for i in range(len(ell))]):
-    #     raise Exception("ell={} has negative element".format(ell))
 
     # mehrdad_eval('./data/mehrdad-64.mat')
 
@@ -547,7 +541,7 @@ def main():
     # shaping_obj_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, ell)
     # shaping_events_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, ell, itr)
     # int_shaping_obj_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, ell)
-    int_shaping_events_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, ell, itr)
+    int_shaping_events_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, ell, base_activity, itr)
 
     # max_int_events_vs_time(budgets[-1], n, mu, alpha, w, t0, tf, b, d, itr)
 
