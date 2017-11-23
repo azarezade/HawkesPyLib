@@ -529,9 +529,11 @@ def main():
     d = np.ones(n)
 
     budgets = np.array([0.5, 10, 20, 50, 100, 150, 200, 250])
-    itr = 20
+    itr = 30
 
     mu, alpha = generate_model(n, sparsity, mu_max, alpha_max)
+
+    alpha = 0.5 * (alpha + np.transpose(alpha))
 
     ell = 6 * np.array([0.250, 0.250, 0.500, 0.7500] * int(n / 4))
     base_activity = g_ls_int(tf, tf, alpha, w).dot(mu)
