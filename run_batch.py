@@ -517,22 +517,24 @@ def main():
     sparsity = 0.3
     mu_max = 0.01
     alpha_max = 0.1
-    w = 1
+    w = 2
 
     b = 100 * mu_max
     c = n * tf * mu_max
     d = np.ones(n)
 
-    budgets = np.array([0.5, 10, 20, 50, 100, 150, 200, 250])
-    itr = 20
+    # budgets = np.array([0.5, 10, 20, 50, 100, 150, 200, 250])
+    # itr = 20
+    budgets = np.array([250])
+    itr = 1
 
     mu, alpha = generate_model(n, sparsity, mu_max, alpha_max)
 
-    ell = 7 * np.array([0.250, 0.250, 0.500, 0.7500] * int(n / 4))
+    ell = 6 * np.array([0.250, 0.250, 0.500, 0.7500] * int(n / 4))
     base_activity = (np.eye(n) - alpha.dot(inv(alpha - w * np.eye(n)))).dot(mu) * tf
-    # ell = ell - base_activity
-    if any([ell[i] - base_activity[i] < 0 for i in range(len(ell))]):
-        raise Exception("ell={} has negative element".format(ell))
+    ell = ell + base_activity
+    # if any([ell[i] - base_activity[i] < 0 for i in range(len(ell))]):
+    #     raise Exception("ell={} has negative element".format(ell))
 
     # mehrdad_eval('./data/mehrdad-64.mat')
 
