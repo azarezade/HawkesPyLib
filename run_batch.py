@@ -53,6 +53,7 @@ def count_user_events(times, users, n, a, b):
 
 
 def events_vs_time(c, n, mu, alpha, w, t0, tf, b, d):
+    g = lambda x: np.exp(-w * x)
     deg = np.zeros(n)
     for j in range(n):
         deg[j] = np.count_nonzero(alpha[j, :])
@@ -63,11 +64,11 @@ def events_vs_time(c, n, mu, alpha, w, t0, tf, b, d):
 
     t_opt = maximize_weighted_activity(b, c, d, t0, tf, alpha, w)
 
-    times_deg, _ = generate_events(t0, tf, mu, alpha, lambda t: u_deg(t, tf, c, deg))
-    times_prk, _ = generate_events(t0, tf, mu, alpha, lambda t: u_prk(t, tf, c, weight))
-    times_uniform, _ = generate_events(t0, tf, mu, alpha, lambda t: u_unf(t, tf, c, n))
-    times_optimal, _ = generate_events(t0, tf, mu, alpha, lambda t: u_opt_inc(t, t_opt, n, b))
-    times_unc, _ = generate_events(t0, tf, mu, alpha)
+    times_deg, _ = generate_events(t0, tf, mu, alpha, lambda t: u_deg(t, tf, c, deg), g=g)
+    times_prk, _ = generate_events(t0, tf, mu, alpha, lambda t: u_prk(t, tf, c, weight), g=g)
+    times_uniform, _ = generate_events(t0, tf, mu, alpha, lambda t: u_unf(t, tf, c, n), g=g)
+    times_optimal, _ = generate_events(t0, tf, mu, alpha, lambda t: u_opt_inc(t, t_opt, n, b), g=g)
+    times_unc, _ = generate_events(t0, tf, mu, alpha, g=g)
 
     with open('./results/events_vs_time.pickle', 'wb') as f:
         pickle.dump([times_deg, times_prk, times_uniform, times_optimal, times_unc,
@@ -158,6 +159,7 @@ def int_obj_vs_budget(budget, n, mu, alpha, w, t0, tf, b, d):
 
 
 def events_vs_budget(budget, n, mu, alpha, w, t0, tf, b, d, itr):
+    g = lambda x: np.exp(-w * x)
     deg = np.zeros(n)
     for j in range(n):
         deg[j] = np.count_nonzero(alpha[j, :])
@@ -174,11 +176,11 @@ def events_vs_budget(budget, n, mu, alpha, w, t0, tf, b, d, itr):
         t_opt[i, :] = maximize_weighted_activity(b, c, d, t0, tf, alpha, w)
 
         for j in range(itr):
-            times_deg, _ = generate_events(t0, tf, mu, alpha, lambda t: u_deg(t, tf, c, deg))
-            times_prk, _ = generate_events(t0, tf, mu, alpha, lambda t: u_prk(t, tf, c, weight))
-            times_uniform, _ = generate_events(t0, tf, mu, alpha, lambda t: u_unf(t, tf, c, n))
-            times_optimal, _ = generate_events(t0, tf, mu, alpha, lambda t: u_opt_inc(t, t_opt[i, :], n, b))
-            times_unc, _ = generate_events(t0, tf, mu, alpha)
+            times_deg, _ = generate_events(t0, tf, mu, alpha, lambda t: u_deg(t, tf, c, deg), g=g)
+            times_prk, _ = generate_events(t0, tf, mu, alpha, lambda t: u_prk(t, tf, c, weight), g=g)
+            times_uniform, _ = generate_events(t0, tf, mu, alpha, lambda t: u_unf(t, tf, c, n), g=g)
+            times_optimal, _ = generate_events(t0, tf, mu, alpha, lambda t: u_opt_inc(t, t_opt[i, :], n, b), g=g)
+            times_unc, _ = generate_events(t0, tf, mu, alpha, g=g)
             event_num[0, i, j] = len(times_deg)
             event_num[1, i, j] = len(times_prk)
             event_num[2, i, j] = len(times_uniform)
@@ -215,6 +217,7 @@ def events_vs_budget(budget, n, mu, alpha, w, t0, tf, b, d, itr):
 
 
 def int_events_vs_budget(budget, n, mu, alpha, w, t0, tf, b, d, itr):
+    g = lambda x: np.exp(-w * x)
     deg = np.zeros(n)
     for j in range(n):
         deg[j] = np.count_nonzero(alpha[j, :])
@@ -231,11 +234,11 @@ def int_events_vs_budget(budget, n, mu, alpha, w, t0, tf, b, d, itr):
         t_opt[i, :] = maximize_int_weighted_activity(b, c, d, t0, tf, alpha, w)
 
         for j in range(itr):
-            times_deg, _ = generate_events(t0, tf, mu, alpha, lambda t: u_deg(t, tf, c, deg))
-            times_prk, _ = generate_events(t0, tf, mu, alpha, lambda t: u_prk(t, tf, c, weight))
-            times_uniform, _ = generate_events(t0, tf, mu, alpha, lambda t: u_unf(t, tf, c, n))
-            times_optimal, _ = generate_events(t0, tf, mu, alpha, lambda t: u_opt_dec(t, t_opt[i, :], n, b))
-            times_unc, _ = generate_events(t0, tf, mu, alpha)
+            times_deg, _ = generate_events(t0, tf, mu, alpha, lambda t: u_deg(t, tf, c, deg), g=g)
+            times_prk, _ = generate_events(t0, tf, mu, alpha, lambda t: u_prk(t, tf, c, weight), g=g)
+            times_uniform, _ = generate_events(t0, tf, mu, alpha, lambda t: u_unf(t, tf, c, n), g=g)
+            times_optimal, _ = generate_events(t0, tf, mu, alpha, lambda t: u_opt_dec(t, t_opt[i, :], n, b), g=g)
+            times_unc, _ = generate_events(t0, tf, mu, alpha, g=g)
             event_num[0, i, j] = len(times_deg)
             event_num[1, i, j] = len(times_prk)
             event_num[2, i, j] = len(times_uniform)
@@ -272,6 +275,7 @@ def int_events_vs_budget(budget, n, mu, alpha, w, t0, tf, b, d, itr):
 
 
 def mehrdad_eval(data_path, itr=30):
+    g = lambda x: np.exp(-w * x)
     data = sio.loadmat(data_path)
     t0 = data['t0'][0][0]
     tf = data['tf'][0][0]
@@ -292,7 +296,7 @@ def mehrdad_eval(data_path, itr=30):
             return [lambda_cam[i, j] for j in range(n)]
         obj[i] = eval_weighted_activity(tf, u_mehrdad, d, t0, tf, alpha, w)
         for j in range(itr):
-            times_mehrdad, _ = generate_events(t0, tf, mu, alpha, u_mehrdad)
+            times_mehrdad, _ = generate_events(t0, tf, mu, alpha, u_mehrdad, g=g)
             event_num[i, j] = len(times_mehrdad)
             terminal_event_num[i, j] = count_events(times_mehrdad, tf - 1, tf)
 
@@ -351,6 +355,7 @@ def shaping_obj_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, ell):
 
 
 def shaping_events_vs_budget(budget, n, mu, alpha, w, t0, tf, b, ell, itr):
+    g = lambda x: np.exp(-w * x)
     deg = np.zeros(n)
     for j in range(n):
         deg[j] = np.count_nonzero(alpha[j, :])
@@ -367,11 +372,11 @@ def shaping_events_vs_budget(budget, n, mu, alpha, w, t0, tf, b, ell, itr):
         t_opt[i, :], u_opt[i, :] = maximize_shaping(b, c, ell, t0, tf, alpha, w)
 
         for j in range(itr):
-            times_deg, users_deg = generate_events(t0, tf, mu, alpha, lambda t: u_deg(t, tf, c, deg))
-            times_prk, users_prk = generate_events(t0, tf, mu, alpha, lambda t: u_prk(t, tf, c, weight))
-            times_unf, users_unf = generate_events(t0, tf, mu, alpha, lambda t: u_unf(t, tf, c, n))
-            times_opt, users_opt = generate_events(t0, tf, mu, alpha, lambda t: [u_opt[i,k] * (t > t_opt[i,k]) for k in range(n)])
-            times_unc, users_unc = generate_events(t0, tf, mu, alpha)
+            times_deg, users_deg = generate_events(t0, tf, mu, alpha, lambda t: u_deg(t, tf, c, deg), g=g)
+            times_prk, users_prk = generate_events(t0, tf, mu, alpha, lambda t: u_prk(t, tf, c, weight), g=g)
+            times_unf, users_unf = generate_events(t0, tf, mu, alpha, lambda t: u_unf(t, tf, c, n), g=g)
+            times_opt, users_opt = generate_events(t0, tf, mu, alpha, lambda t: [u_opt[i,k] * (t > t_opt[i,k]) for k in range(n)], g=g)
+            times_unc, users_unc = generate_events(t0, tf, mu, alpha, g=g)
             terminal_event_num[0, i, :] += count_user_events(times_deg, users_deg, n, tf-1, tf)
             terminal_event_num[1, i, :] += count_user_events(times_prk, users_prk, n, tf-1, tf)
             terminal_event_num[2, i, :] += count_user_events(times_unf, users_unf, n, tf-1, tf)
@@ -435,6 +440,7 @@ def int_shaping_obj_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, ell):
 
 
 def int_shaping_events_vs_budget(budget, n, mu, alpha, w, t0, tf, b, ell, base_activity, itr):
+    g = lambda x: np.exp(-w*x)
     deg = np.zeros(n)
     for k in range(n):
         deg[k] = np.count_nonzero(alpha[k, :])
@@ -452,11 +458,11 @@ def int_shaping_events_vs_budget(budget, n, mu, alpha, w, t0, tf, b, ell, base_a
         # c_opt = np.dot(t_opt[i, :], u_opt[i, :])
 
         for k in range(itr):
-            times_deg, users_deg = generate_events(t0, tf, mu, alpha, lambda t: u_deg(t, tf, c, deg))
-            times_prk, users_prk = generate_events(t0, tf, mu, alpha, lambda t: u_prk(t, tf, c, weight))
-            times_unf, users_unf = generate_events(t0, tf, mu, alpha, lambda t: u_unf(t, tf, c, n))
-            times_opt, users_opt = generate_events(t0, tf, mu, alpha, lambda t: [u_opt[i, k] * (t < t_opt[i, k]) for k in range(n)])
-            times_unc, users_unc = generate_events(t0, tf, mu, alpha)
+            times_deg, users_deg = generate_events(t0, tf, mu, alpha, lambda t: u_deg(t, tf, c, deg), g=g)
+            times_prk, users_prk = generate_events(t0, tf, mu, alpha, lambda t: u_prk(t, tf, c, weight), g=g)
+            times_unf, users_unf = generate_events(t0, tf, mu, alpha, lambda t: u_unf(t, tf, c, n), g=g)
+            times_opt, users_opt = generate_events(t0, tf, mu, alpha, lambda t: [u_opt[i, k] * (t < t_opt[i, k]) for k in range(n)], g=g)
+            times_unc, users_unc = generate_events(t0, tf, mu, alpha, g=g)
 
             event_num[0, i, :] += count_user_events(times_deg, users_deg, n, 0, tf)
             event_num[1, i, :] += count_user_events(times_prk, users_prk, n, 0, tf)
@@ -480,6 +486,7 @@ def int_shaping_events_vs_budget(budget, n, mu, alpha, w, t0, tf, b, ell, base_a
 
 
 def max_int_events_vs_time(budget, n, mu, alpha, w, t0, tf, b, d, itr):
+    g = lambda x: np.exp(-w * x)
     deg = np.zeros(n)
     for j in range(n):
         deg[j] = np.count_nonzero(alpha[j, :])
@@ -492,10 +499,10 @@ def max_int_events_vs_time(budget, n, mu, alpha, w, t0, tf, b, d, itr):
     users = np.zeros([5, itr], dtype=object)
     t_opt = maximize_int_weighted_activity(b, budget, d, t0, tf, alpha, w)
     for i in range(itr):
-        times[0,i], users[0,i] = generate_events(t0, tf, mu, alpha, lambda t: u_opt_dec(t, t_opt, n, b))
-        times[1,i], users[1,i] = generate_events(t0, tf, mu, alpha, lambda t: u_unf(t, tf, budget, n))
-        times[2,i], users[2,i] = generate_events(t0, tf, mu, alpha, lambda t: u_deg(t, tf, budget, deg))
-        times[3,i], users[3,i] = generate_events(t0, tf, mu, alpha, lambda t: u_prk(t, tf, budget, weight))
+        times[0,i], users[0,i] = generate_events(t0, tf, mu, alpha, lambda t: u_opt_dec(t, t_opt, n, b), g=g)
+        times[1,i], users[1,i] = generate_events(t0, tf, mu, alpha, lambda t: u_unf(t, tf, budget, n), g=g)
+        times[2,i], users[2,i] = generate_events(t0, tf, mu, alpha, lambda t: u_deg(t, tf, budget, deg), g=g)
+        times[3,i], users[3,i] = generate_events(t0, tf, mu, alpha, lambda t: u_prk(t, tf, budget, weight), g=g)
         times[4,i], users[4,i] = generate_events(t0, tf, mu, alpha)
 
     with open('./results/max_int_events_vs_time.pickle', 'wb') as f:
@@ -515,7 +522,7 @@ def main():
     sparsity = 0.3
     mu_max = 0.01
     alpha_max = 0.1
-    w = 1
+    w = 2
 
     b = 100 * mu_max
     c = n * tf * mu_max
