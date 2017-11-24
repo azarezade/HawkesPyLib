@@ -477,11 +477,11 @@ def int_shaping_events_vs_budget(budget, n, mu, alpha, w, t0, tf, b, ell, base_a
             obj[i, j] = norm(event_num[i, j, :] - ell)**2
 
     with open('./results/int_shaping_events_vs_budget.pickle', 'wb') as f:
-        pickle.dump([event_num, obj, t_opt, u_opt, deg, weight, budget, n, mu, alpha, w, t0, tf, b, ell, itr, RND_SEED], f)
+        pickle.dump([event_num, obj, t_opt, u_opt, deg, weight, budget, n, mu, alpha, w, t0, tf, b, ell, base_activity, itr, RND_SEED], f)
 
     sio.savemat('./results/int_shaping_events_vs_budget.mat',
                 {'event_num': event_num, 'obj': obj, 't_opt': t_opt, 'u_opt': u_opt, 'deg': deg, 'weight': weight, 'budget': budget,
-                 'n': n, 'mu': mu, 'alpha': alpha, 'w': w, 't0': t0, 'tf': tf, 'b': b, 'ell': ell, 'seed': RND_SEED})
+                 'n': n, 'mu': mu, 'alpha': alpha, 'w': w, 't0': t0, 'tf': tf, 'b': b, 'ell': ell, 'base_activity': base_activity, 'seed': RND_SEED})
     return
 
 
@@ -514,6 +514,35 @@ def max_int_events_vs_time(budget, n, mu, alpha, w, t0, tf, b, d, itr):
     return
 
 
+def shaping_int_events_vs_time(budget, n, mu, alpha, w, t0, tf, b, ell, base_activity, itr):
+    g = lambda x: np.exp(-w * x)
+    deg = np.zeros(n)
+    for j in range(n):
+        deg[j] = np.count_nonzero(alpha[j, :])
+
+    graph = nx.from_numpy_matrix(alpha)
+    pr = nx.pagerank(graph)
+    weight = np.asanyarray(list(pr.values()))
+
+    times = np.zeros([5, itr], dtype=object)
+    users = np.zeros([5, itr], dtype=object)
+    t_opt, u_opt = maximize_int_shaping(b, budget, ell - base_activity, t0, tf, alpha, w)
+    for i in range(itr):
+        times[0,i], users[0,i] = generate_events(t0, tf, mu, alpha, lambda t: [u_opt[k] * (t < t_opt[k]) for k in range(n)], g=g)
+        times[1,i], users[1,i] = generate_events(t0, tf, mu, alpha, lambda t: u_unf(t, tf, budget, n), g=g)
+        times[2,i], users[2,i] = generate_events(t0, tf, mu, alpha, lambda t: u_deg(t, tf, budget, deg), g=g)
+        times[3,i], users[3,i] = generate_events(t0, tf, mu, alpha, lambda t: u_prk(t, tf, budget, weight), g=g)
+        times[4,i], users[4,i] = generate_events(t0, tf, mu, alpha)
+
+    with open('./results/shaping_int_events_vs_time.pickle', 'wb') as f:
+        pickle.dump([t_opt, times, users, deg, weight, budget, n, mu, alpha, w, t0, tf, b, ell, base_activity, itr, RND_SEED], f)
+
+    sio.savemat('./results/shaping_int_events_vs_time.mat',
+                {'t_opt': t_opt, 'times': times, 'users': users, 'deg': deg, 'weight': weight, 'budget': budget,
+                 'n': n, 'mu': mu, 'alpha': alpha, 'w': w, 't0': t0, 'tf': tf, 'b': b, 'ell': ell, 'base_activity': base_activity, 'seed': RND_SEED})
+    return
+
+
 def main():
     np.random.seed(RND_SEED)
     t0 = 0
@@ -529,7 +558,7 @@ def main():
     d = np.ones(n)
 
     budgets = np.array([0.5, 10, 20, 50, 100, 150, 200, 250])
-    itr = 30
+    itr = 20
 
     mu, alpha = generate_model(n, sparsity, mu_max, alpha_max)
 
@@ -548,9 +577,10 @@ def main():
     # shaping_obj_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, ell)
     # shaping_events_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, ell, itr)
     # int_shaping_obj_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, ell)
-    int_shaping_events_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, ell, base_activity, itr)
+    # int_shaping_events_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, ell, base_activity, itr)
 
-    # max_int_events_vs_time(budgets[-1], n, mu, alpha, w, t0, tf, b, d, itr)
+    max_int_events_vs_time(budgets[-1], n, mu, alpha, w, t0, tf, b, d, itr)
+    # shaping_int_events_vs_time(budget[-1], n, mu, alpha, w, t0, tf, b, ell, base_activity, itr)
 
 if __name__ == '__main__':
     RND_SEED = 4
