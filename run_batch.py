@@ -579,8 +579,9 @@ def main():
     # int_shaping_obj_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, ell)
     # int_shaping_events_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, ell, base_activity, itr)
 
-    max_int_events_vs_time(budgets[-1], n, mu, alpha, w, t0, tf, b, d, itr)
-    # shaping_int_events_vs_time(budget[-1], n, mu, alpha, w, t0, tf, b, ell, base_activity, itr)
+    # max_int_events_vs_time(budgets[-1], n, mu, alpha, w, t0, tf, b, d, itr)
+    shaping_int_events_vs_time(budgets[-1], n, mu, alpha, w, t0, tf, b, ell, base_activity, itr)
+
 
 if __name__ == '__main__':
     RND_SEED = 4
