@@ -24,22 +24,22 @@ def events_to_tick_events(events, n):
     return tick_events
 
 
-def main():
-    dataset = "british_election"
-    matfile = "/Users/ali/Documents/Datasets/Abir_RealDataSource/for_python/" + dataset + ".mat"
+def inference(dataset, decays):
+    matfile = "./data/" + dataset + ".mat"
     adj, events, n = load(matfile)
 
     tick_events = events_to_tick_events(events, n)
 
-    learner = HawkesExpKern(decays=20000, penalty="l1", solver='agd', C=1000, verbose=True)
+    learner = HawkesExpKern(decays=decays, penalty="l1", solver="agd", C=1000, verbose=True)
     learner.fit(tick_events)
     influence_matrix = learner.adjacency
     baseline = learner.baseline
-    print('score = {}'.format(learner.score()))
+    print("score = {}".format(learner.score()))
 
-    with open('./results/british_election.pickle', 'wb') as f:
-        pickle.dump([influence_matrix, baseline], f)
+    with open("./models/" + dataset + ".pickle", "wb") as f:
+        pickle.dump([influence_matrix, baseline, decays, n], f)
+    return
 
 
-if __name__ == '__main__':
-    main()
+if __name__ == "__main__":
+    inference("club", 20000)
