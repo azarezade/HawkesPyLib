@@ -524,10 +524,10 @@ def main():
 
     mu, alpha = generate_model(n, sparsity, mu_max, alpha_max)
 
-    # ell for shaping terminal:
+    # ell for shaping terminal
     ell = 2 * np.array([0.250, 0.250, 0.500, 0.7500] * int(n / 4))
     ell = ell - np.dot(g_max_int(0, tf, alpha, w), mu)
-    # ell for shaping integral:
+    # ell for shaping integral
     ell_int = 6 * np.array([0.250, 0.250, 0.500, 0.7500] * int(n / 4))
     base_activity = g_ls_int(tf, tf, alpha, w).dot(mu)
     ell_int = ell_int + base_activity
@@ -541,7 +541,7 @@ def main():
     # max_int_events_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, d, itr)
 
     shaping_obj_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, ell)
-    shaping_events_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, ell, itr)
+    # shaping_events_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, ell, itr)
     # shaping_int_obj_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, ell_int)
     # shaping_int_events_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, ell_int, base_activity, itr)
 
