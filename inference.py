@@ -25,7 +25,7 @@ def events_to_tick_events(events, n):
 
 
 def inference(dataset, decays):
-    matfile = "./data/" + dataset + ".mat"
+    matfile = "./dataset/" + dataset + ".mat"
     adj, events, n = load(matfile)
 
     tick_events = events_to_tick_events(events, n)
@@ -36,7 +36,7 @@ def inference(dataset, decays):
     baseline = learner.baseline
     print("score = {}".format(learner.score()))
 
-    with open("./models/" + dataset + ".pickle", "wb") as f:
+    with open("./model/" + dataset + ".pickle", "wb") as f:
         pickle.dump([influence_matrix, baseline, decays, n], f)
     return
 

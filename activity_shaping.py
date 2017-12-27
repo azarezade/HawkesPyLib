@@ -194,7 +194,7 @@ def main():
     #         plt.plot(t, y[i,j,:])
     # plt.show()
 
-    # sio.savemat('./data/pydata-lsq-'+str(n)+'.mat',
+    # sio.savemat('./dataset/pydata-lsq-'+str(n)+'.mat',
     #             {'T': tf, 'N': n, 'w': w, 'mu': mu, 'alpha': alpha, 'C': c / tf, 'v': ell})
 
 
