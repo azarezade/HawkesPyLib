@@ -1,11 +1,10 @@
 # __author__ = 'Ali_Zarezade'
 
-import numpy as np
-import matplotlib as mpl
-# mpl.use('Agg')
-import matplotlib.pyplot as plt
-import scipy.io as sio
+# # Set limit to the number of cores:
+# import mkl
+# mkl.set_num_threads(n)
 
+import matplotlib as mpl; mpl.use('Agg')
 from numpy.linalg import inv
 from scipy.linalg import logm, expm
 from scipy.optimize import fsolve, brentq
@@ -28,28 +27,18 @@ def psi(t, alpha, w=1.0):
         return alpha.dot(expm((alpha - w * I) * t))
 
 
-def eval_weighted_activity(t, u, d, t0, tf, alpha, w=1.0):
+def psi_int(t, t0, tf, alpha, w=1):
     """
-    Evaluate the following objective function
-      d^T eta(tf) = int_0^tf sum_i mu_i(s)*(sum_j psi_ji(tf-s)*d_j) ds
-
-    Arguments:
-        t (float): the time at which the weighted activity wil be evaluated
-        u (func): control base intensity function where u(t, i) is control of i'th user at time t
-        d (ndarray): weigh of users expected intensity
-        t0 (float): initial time
-        tf (float): terminal time
-        alpha (ndarray): influence matrix
-        w (float): weight of exponential kernel
+    Integral of psi at time t, int_psi(t) = int_{t0}^{tf} psi(s-t) ds
     """
-    integral = 0
     n = alpha.shape[0]
-    for i in range(n):
-        integral += u(t)[i] + integrate.quad(lambda s: u(s)[i] * psi(t - s, alpha, w)[:, i].dot(d), t0, tf)[0]
-    return integral
+    I = np.eye(n)
+    if (t > tf) or (t < t0):
+        return np.zeros((n, n))
+    return I + alpha.dot(inv(alpha - w * I)).dot(expm((alpha - w * I) * (tf - t)) - I)
 
 
-def maximize_weighted_activity(b, c, d, t0, tf, alpha, w=1.0, tol=1e-1):
+def activity_max(b, c, d, t0, tf, alpha, w=1.0, tol=1e-1):
     """
     Solve the following optimization:
         maximize    d^T eta(tf)
@@ -90,22 +79,13 @@ def maximize_weighted_activity(b, c, d, t0, tf, alpha, w=1.0, tol=1e-1):
     return t
 
 
-def psi_int(t, t0, tf, alpha, w=1):
-    """
-    Integral of psi at time t, int_psi(t) = int_{t0}^{tf} psi(s-t) ds
-    """
-    n = alpha.shape[0]
-    I = np.eye(n)
-    if (t > tf) or (t < t0):
-        return np.zeros((n, n))
-    return I + alpha.dot(inv(alpha - w * I)).dot(expm((alpha - w * I) * (tf - t)) - I)
-
-
-def eval_int_weighted_activity(u, d, t0, tf, alpha, w=1):
+def eval_activity_max(t, u, d, t0, tf, alpha, w=1.0):
     """
     Evaluate the following objective function
-      int_t0^tf d^T eta(s) ds = int_t0^tf sum_i mu_i(s)*(sum_j int_t0^tf psi_ji(t-s)*d_j dt) ds
+      d^T eta(tf) = int_0^tf sum_i mu_i(s)*(sum_j psi_ji(tf-s)*d_j) ds
+
     Arguments:
+        t (float): the time at which the weighted activity wil be evaluated
         u (func): control base intensity function where u(t, i) is control of i'th user at time t
         d (ndarray): weigh of users expected intensity
         t0 (float): initial time
@@ -116,11 +96,11 @@ def eval_int_weighted_activity(u, d, t0, tf, alpha, w=1):
     integral = 0
     n = alpha.shape[0]
     for i in range(n):
-        integral += integrate.quad(lambda s: u(s)[i] * psi_int(s, t0, tf, alpha, w)[:, i].dot(d), t0, tf)[0]
+        integral += u(t)[i] + integrate.quad(lambda s: u(s)[i] * psi(t - s, alpha, w)[:, i].dot(d), t0, tf)[0]
     return integral
 
 
-def maximize_int_weighted_activity(b, c, d, t0, tf, alpha, w=1, tol=1e-1):
+def activity_max_int(b, c, d, t0, tf, alpha, w=1, tol=1e-1):
     """
     Solve the following optimization:
         maximize    int_t0^tf d^T eta(tf)
@@ -170,6 +150,25 @@ def maximize_int_weighted_activity(b, c, d, t0, tf, alpha, w=1, tol=1e-1):
     return t
 
 
+def eval_activity_max_int(u, d, t0, tf, alpha, w=1):
+    """
+    Evaluate the following objective function
+      int_t0^tf d^T eta(s) ds = int_t0^tf sum_i mu_i(s)*(sum_j int_t0^tf psi_ji(t-s)*d_j dt) ds
+    Arguments:
+        u (func): control base intensity function where u(t, i) is control of i'th user at time t
+        d (ndarray): weigh of users expected intensity
+        t0 (float): initial time
+        tf (float): terminal time
+        alpha (ndarray): influence matrix
+        w (float): weight of exponential kernel
+    """
+    integral = 0
+    n = alpha.shape[0]
+    for i in range(n):
+        integral += integrate.quad(lambda s: u(s)[i] * psi_int(s, t0, tf, alpha, w)[:, i].dot(d), t0, tf)[0]
+    return integral
+
+
 def main():
     # np.random.seed(0)
     t0 = 0
@@ -187,9 +186,9 @@ def main():
     mu, alpha = generate_model(n, sparsity, mu_max, alpha_max)
     # sio.savemat('./data/pydata-64.mat', {'T': tf, 'N': n, 'w': w, 'mu': mu, 'alpha': alpha, 'c': d, 'C': c / tf})
 
-    # maximize_weighted_activity(b, c, d, t0, tf, alpha, w)
+    # activity_max(b, c, d, t0, tf, alpha, w)
 
-    # maximize_int_weighted_activity(b, c, d, t0, tf, alpha, w)
+    # activity_max_int(b, c, d, t0, tf, alpha, w)
 
     # r = max(np.abs(np.linalg.eig(alpha)[0]))
 
