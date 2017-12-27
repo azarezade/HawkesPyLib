@@ -54,7 +54,7 @@ def g_ls_int(t, tf, alpha, w):
     return (I - alpha.dot(alpha_w_inv)) * t + alpha.dot(alpha_w_inv2).dot(expm(alpha_w * tf) - expm(alpha_w * (tf - t)))
 
 
-def activity_shaping(b, c, ell, t0, tf, alpha, w, tol=1e-4):
+def activity_shaping(b, c, ell, t0, tf, alpha, w, tol=1e-6):
     """
     Solve the following optimization: TBD...
     """

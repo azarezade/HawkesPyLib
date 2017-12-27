@@ -290,7 +290,7 @@ def shaping_obj_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, ell):
     pr = nx.pagerank(graph)
     weight = np.asanyarray(list(pr.values()))
 
-    obj = np.zeros((7, len(budgets)))
+    obj = np.zeros((4, len(budgets)))
     t_opt = np.zeros((len(budgets), n))
     u_opt = np.zeros((len(budgets), n))
     for i in range(len(budgets)):
@@ -372,7 +372,7 @@ def shaping_int_obj_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, ell):
     pr = nx.pagerank(graph)
     weight = np.asanyarray(list(pr.values()))
 
-    obj = np.zeros((7, len(budgets)))
+    obj = np.zeros((4, len(budgets)))
     t_opt = np.zeros((len(budgets), n))
     u_opt = np.zeros((len(budgets), n))
     for i in range(len(budgets)):
