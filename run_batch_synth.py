@@ -341,16 +341,16 @@ def shaping_events_vs_budget(budget, n, mu, alpha, w, t0, tf, b, ell, itr):
             times_prk, users_prk = generate_events(t0, tf, mu, alpha, lambda t: u_prk(t, tf, c, weight), g=g)
             times_unf, users_unf = generate_events(t0, tf, mu, alpha, lambda t: u_unf(t, tf, c, n), g=g)
             times_opt, users_opt = generate_events(t0, tf, mu, alpha, lambda t: [u_opt[i,k] * (t > t_opt[i,k]) for k in range(n)], g=g)
-            times_unc, users_unc = generate_events(t0, tf, mu, alpha, g=g)
+            # times_unc, users_unc = generate_events(t0, tf, mu, alpha, g=g)
             terminal_event_num[0, i, :] += count_user_events(times_deg, users_deg, n, tf-1, tf)
             terminal_event_num[1, i, :] += count_user_events(times_prk, users_prk, n, tf-1, tf)
             terminal_event_num[2, i, :] += count_user_events(times_unf, users_unf, n, tf-1, tf)
             terminal_event_num[3, i, :] += count_user_events(times_opt, users_opt, n, tf-1, tf)
-            terminal_event_num[4, i, :] += count_user_events(times_unc, users_unc, n, tf-1, tf)
+            # terminal_event_num[4, i, :] += count_user_events(times_unc, users_unc, n, tf-1, tf)
         terminal_event_num[:, i, :] = terminal_event_num[:, i, :] / itr
 
-    obj = np.zeros((5, len(budget)))
-    for i in range(5):
+    obj = np.zeros((4, len(budget)))
+    for i in range(4):
         for j in range(len(budget)):
             obj[i, j] = norm(terminal_event_num[i, j, :] - ell) ** 2
 
@@ -378,24 +378,17 @@ def shaping_int_obj_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, ell):
     for i in range(len(budgets)):
         c = budgets[i]
         t_opt[i, :], u_opt[i, :] = activity_shaping_int(b, c, ell, t0, tf, alpha, w)
-        c_opt = np.dot(t_opt[i, :], u_opt[i, :])
         obj[0, i], _ = eval_activity_shaping_int(tf * np.ones(n), (deg / sum(deg)) * (c / tf) * np.ones(n), ell, tf, alpha, w)
-        obj[1, i], _ = eval_activity_shaping_int(tf * np.ones(n), (deg / sum(deg)) * (c_opt / tf) * np.ones(n), ell, tf, alpha, w)
-        obj[2, i], _ = eval_activity_shaping_int(tf * np.ones(n), weight * (c / tf) * np.ones(n), ell, tf, alpha, w)
-        obj[3, i], _ = eval_activity_shaping_int(tf * np.ones(n), weight * (c_opt / tf) * np.ones(n), ell, tf, alpha, w)
-        obj[4, i], _ = eval_activity_shaping_int(tf * np.ones(n), (1 / n) * (c / tf) * np.ones(n), ell, tf, alpha, w)
-        obj[5, i], _ = eval_activity_shaping_int(tf * np.ones(n), (1 / n) * (c_opt / tf) * np.ones(n), ell, tf, alpha, w)
-        obj[6, i], _ = eval_activity_shaping_int(t_opt[i, :], u_opt[i, :], ell, tf, alpha, w)
+        obj[1, i], _ = eval_activity_shaping_int(tf * np.ones(n), weight * (c / tf) * np.ones(n), ell, tf, alpha, w)
+        obj[2, i], _ = eval_activity_shaping_int(tf * np.ones(n), (1 / n) * (c / tf) * np.ones(n), ell, tf, alpha, w)
+        obj[3, i], _ = eval_activity_shaping_int(t_opt[i, :], u_opt[i, :], ell, tf, alpha, w)
         print("used_budget={}, total_budget={}, obj={}".format(np.dot(t_opt[i, :], u_opt[i, :]), c, obj[:,i]))
 
     plt.clf()
     plt.plot(budgets, obj[0, :], label="DEG")
-    plt.plot(budgets, obj[1, :], label="DEG2")
-    plt.plot(budgets, obj[2, :], label="PRK")
-    plt.plot(budgets, obj[3, :], label="PRK2")
-    plt.plot(budgets, obj[4, :], label="UNF")
-    plt.plot(budgets, obj[5, :], label="UNF2")
-    plt.plot(budgets, obj[6, :], label="OPT")
+    plt.plot(budgets, obj[1, :], label="PRK")
+    plt.plot(budgets, obj[2, :], label="UNF")
+    plt.plot(budgets, obj[3, :], label="OPT")
     plt.legend(loc="upper left")
     plt.savefig('./result/shaping_int_obj_vs_budget.pdf')
 
@@ -431,17 +424,17 @@ def shaping_int_events_vs_budget(budget, n, mu, alpha, w, t0, tf, b, ell, base_a
             times_prk, users_prk = generate_events(t0, tf, mu, alpha, lambda t: u_prk(t, tf, c, weight), g=g)
             times_unf, users_unf = generate_events(t0, tf, mu, alpha, lambda t: u_unf(t, tf, c, n), g=g)
             times_opt, users_opt = generate_events(t0, tf, mu, alpha, lambda t: [u_opt[i, k] * (t < t_opt[i, k]) for k in range(n)], g=g)
-            times_unc, users_unc = generate_events(t0, tf, mu, alpha, g=g)
+            # times_unc, users_unc = generate_events(t0, tf, mu, alpha, g=g)
 
             event_num[0, i, :] += count_user_events(times_deg, users_deg, n, 0, tf)
             event_num[1, i, :] += count_user_events(times_prk, users_prk, n, 0, tf)
             event_num[2, i, :] += count_user_events(times_unf, users_unf, n, 0, tf)
             event_num[3, i, :] += count_user_events(times_opt, users_opt, n, 0, tf)
-            event_num[4, i, :] += count_user_events(times_unc, users_unc, n, 0, tf)
+            # event_num[4, i, :] += count_user_events(times_unc, users_unc, n, 0, tf)
         event_num[:, i, :] = event_num[:, i, :] / itr
 
-    obj = np.zeros((5, len(budget)))
-    for i in range(5):
+    obj = np.zeros((4, len(budget)))
+    for i in range(4):
         for j in range(len(budget)):
             obj[i, j] = norm(event_num[i, j, :] - ell)**2
 
