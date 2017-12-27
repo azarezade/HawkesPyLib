@@ -538,7 +538,7 @@ def main():
     base_activity = g_ls_int(tf, tf, alpha, w).dot(mu)
     ell = ell + base_activity
 
-    # mehrdad_max_events_and_obj_vs_budget('./dataset/mehrdad-64.mat')
+    # mehrdad_max_events_and_obj_vs_budget('./data/mehrdad-64.mat')
 
     # events_vs_time(c*10, n, mu, alpha, w, t0, tf, b, d)
     # max_obj_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, d)

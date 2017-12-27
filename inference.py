@@ -25,7 +25,7 @@ def events_to_tick_events(events, n):
 
 
 def inference(dataset, decays):
-    matfile = "./dataset/" + dataset + ".mat"
+    matfile = "./data/" + dataset + ".mat"
     adj, events, n = load(matfile)
 
     tick_events = events_to_tick_events(events, n)
