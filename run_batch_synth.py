@@ -354,14 +354,18 @@ def shaping_events_vs_budget(budget, n, mu, alpha, w, t0, tf, b, ell, itr):
             terminal_event_num[2, i, :] += count_user_events(times_unf, users_unf, n, tf-1, tf)
             terminal_event_num[3, i, :] += count_user_events(times_opt, users_opt, n, tf-1, tf)
             terminal_event_num[4, i, :] += count_user_events(times_unc, users_unc, n, tf-1, tf)
-
         terminal_event_num[:, i, :] = terminal_event_num[:, i, :] / itr
 
+    obj = np.zeros((5, len(budget)))
+    for i in range(5):
+        for j in range(len(budget)):
+            obj[i, j] = norm(terminal_event_num[i, j, :] - ell) ** 2
+
     with open('./result/shaping_events_vs_budget.pickle', 'wb') as f:
-        pickle.dump([terminal_event_num, t_opt, deg, weight, budget, n, mu, alpha, w, t0, tf, b, ell, itr, RND_SEED], f)
+        pickle.dump([terminal_event_num, obj, t_opt, deg, weight, budget, n, mu, alpha, w, t0, tf, b, ell, itr, RND_SEED], f)
 
     sio.savemat('./result/shaping_events_vs_budget.mat',
-                {'terminal_event_num': terminal_event_num, 't_opt': t_opt, 'deg': deg, 'weight': weight, 'budget': budget,
+                {'terminal_event_num': terminal_event_num, 'obj': obj, 't_opt': t_opt, 'deg': deg, 'weight': weight, 'budget': budget,
                  'n': n, 'mu': mu, 'alpha': alpha, 'w': w, 't0': t0, 'tf': tf, 'b': b, 'ell': ell, 'seed': RND_SEED})
     return
 
