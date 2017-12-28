@@ -78,12 +78,12 @@ def mehrdad_max_events_and_obj_vs_budget(data_path, itr=30):
             event_num[i, j] = len(times_mehrdad)
             terminal_event_num[i, j] = count_events(times_mehrdad, tf - 1, tf)
 
-    with open('./result/mehrdad_max_events_and_obj_vs_budget.pickle', 'wb') as f:
-        pickle.dump([obj, event_num, terminal_event_num, budget, n, mu, alpha, w, t0, tf, d, itr, RND_SEED], f)
+    data = {'obj': obj, 'event_num': event_num, 'terminal_event_num': terminal_event_num, 'budget': budget, 'n': n,
+            'mu': mu, 'alpha': alpha, 'w': w, 't0': t0, 'tf': tf, 'd': d, 'seed': RND_SEED}
+    sio.savemat('./result/mat/mehrdad_max_events_and_obj_vs_budget.mat', data)
+    with open('./result/pickle/mehrdad_max_events_and_obj_vs_budget.pickle', 'wb') as f:
+        pickle.dump(data, f)
 
-    sio.savemat('./result/mehrdad_max_events_and_obj_vs_budget.mat',
-                {'obj': obj, 'event_num': event_num, 'terminal_event_num': terminal_event_num,
-                 'budget': budget, 'n': n, 'mu': mu, 'alpha': alpha, 'w': w, 't0': t0, 'tf': tf, 'd': d, 'seed': RND_SEED})
     return
 
 
@@ -107,22 +107,11 @@ def max_obj_vs_budget(budget, n, mu, alpha, w, t0, tf, b, d):
         obj[3, i] = eval_activity_max(tf, lambda t: mu + u_opt_inc(t, t_opt[i, :], n, b), d, t0, tf, alpha, w)
         obj[4, i] = eval_activity_max(tf, lambda t: mu, d, t0, tf, alpha, w)
 
-    plt.clf()
-    plt.plot(budget, obj[0, :], label="DEG")
-    plt.plot(budget, obj[1, :], label="PRK")
-    plt.plot(budget, obj[2, :], label="UNF")
-    plt.plot(budget, obj[3, :], label="OPT")
-    plt.plot(budget, obj[4, :], label="UNC")
-    plt.legend(loc="upper left")
-    plt.savefig('./result/max_obj_vs_budget.pdf')
-
-    with open('./result/max_obj_vs_budget.pickle', 'wb') as f:
-        pickle.dump([obj, t_opt, deg, weight,
-                     budget, n, mu, alpha, w, t0, tf, b, d, RND_SEED], f)
-
-    sio.savemat('./result/max_obj_vs_budget.mat',
-                {'obj': obj, 't_opt': t_opt, 'deg': deg, 'weight': weight,
-                 'budget': budget, 'n': n, 'mu': mu, 'alpha': alpha, 'w': w, 't0': t0, 'tf': tf, 'b': b, 'd': d, 'seed': RND_SEED})
+    data = {'obj': obj, 't_opt': t_opt, 'deg': deg, 'weight': weight, 'budget': budget, 'n': n, 'mu': mu,
+            'alpha': alpha, 'w': w, 't0': t0, 'tf': tf, 'b': b, 'd': d, 'seed': RND_SEED}
+    sio.savemat('./result/mat/max_obj_vs_budget.mat', data)
+    with open('./result/pickle/max_obj_vs_budget.pickle', 'wb') as f:
+        pickle.dump(data, f)
     return
 
 
@@ -160,27 +149,12 @@ def max_events_vs_budget(budget, n, mu, alpha, w, t0, tf, b, d, itr):
             terminal_event_num[3, i, j] = count_events(times_optimal, tf-1, tf)
             terminal_event_num[4, i, j] = count_events(times_unc, tf - 1, tf)
 
-    event_num_mean = np.mean(event_num, axis=2)
-    terminal_event_num_mean = np.mean(terminal_event_num, axis=2)
-    # event_num_var = np.var(event_num, axis=2)
-    # terminal_event_num_var = np.var(terminal_event_num, axis=2)
-
-    plt.clf()
-    plt.plot(budget, terminal_event_num_mean[0, :], marker='.', label="DEG")
-    plt.plot(budget, terminal_event_num_mean[1, :], marker='.', label="PRK")
-    plt.plot(budget, terminal_event_num_mean[2, :], marker='.', label="UNF")
-    plt.plot(budget, terminal_event_num_mean[3, :], marker='.', label="OPT")
-    plt.plot(budget, terminal_event_num_mean[4, :], marker='.', label="UNC")
-    plt.legend(loc="lower right")
-    plt.savefig('./result/max_terminal_events_vs_budget.pdf')
-
-    with open('./result/max_events_vs_budget.pickle', 'wb') as f:
-        pickle.dump([event_num, terminal_event_num, t_opt, deg, weight,
-                     budget, n, mu, alpha, w, t0, tf, b, d, itr, RND_SEED], f)
-
-    sio.savemat('./result/max_events_vs_budget.mat',
-                {'event_num': event_num, 'terminal_event_num': terminal_event_num, 't_opt': t_opt, 'deg': deg, 'weight': weight,
-                 'budget': budget, 'n': n, 'mu': mu, 'alpha': alpha, 'w': w, 't0': t0, 'tf': tf, 'b': b, 'd': d, 'seed': RND_SEED})
+    data = {'event_num': event_num, 'terminal_event_num': terminal_event_num, 't_opt': t_opt, 'deg': deg,
+            'weight': weight, 'budget': budget, 'n': n, 'mu': mu, 'alpha': alpha, 'w': w, 't0': t0, 'tf': tf, 'b': b,
+            'd': d, 'seed': RND_SEED}
+    sio.savemat('./result/mat/max_events_vs_budget.mat', data)
+    with open('./result/pickle/max_events_vs_budget.pickle', 'wb') as f:
+        pickle.dump(data, f)
     return
 
 
@@ -204,22 +178,11 @@ def max_int_obj_vs_budget(budget, n, mu, alpha, w, t0, tf, b, d):
         obj[3, i] = eval_activity_max_int(lambda t: mu + u_opt_dec(t, t_opt[i, :], n, b), d, t0, tf, alpha, w)
         obj[4, i] = eval_activity_max_int(lambda t: mu, d, t0, tf, alpha, w)
 
-    plt.clf()
-    plt.plot(budget, obj[0, :], label="DEG")
-    plt.plot(budget, obj[1, :], label="PRK")
-    plt.plot(budget, obj[2, :], label="UNF")
-    plt.plot(budget, obj[3, :], label="OPT")
-    plt.plot(budget, obj[4, :], label="OPT")
-    plt.legend(loc="upper left")
-    plt.savefig('./result/max_int_obj_vs_budget.pdf')
-
+    data = {'obj': obj, 't_opt': t_opt, 'deg': deg, 'weight': weight, 'budget': budget, 'n': n, 'mu': mu,
+            'alpha': alpha, 'w': w, 't0': t0, 'tf': tf, 'b': b, 'd': d, 'seed': RND_SEED}
+    sio.savemat('./result/max_int_obj_vs_budget.mat', data)
     with open('./result/max_int_obj_vs_budget.pickle', 'wb') as f:
-        pickle.dump([obj, t_opt, deg, weight,
-                     budget, n, mu, alpha, w, t0, tf, b, d, RND_SEED], f)
-
-    sio.savemat('./result/max_int_obj_vs_budget.mat',
-                {'obj': obj, 't_opt': t_opt, 'deg': deg, 'weight': weight,
-                 'budget': budget, 'n': n, 'mu': mu, 'alpha': alpha, 'w': w, 't0': t0, 'tf': tf, 'b': b, 'd': d, 'seed': RND_SEED})
+        pickle.dump(data, f)
     return
 
 
@@ -257,31 +220,16 @@ def max_int_events_vs_budget(budget, n, mu, alpha, w, t0, tf, b, d, itr):
             terminal_event_num[3, i, j] = count_events(times_optimal, tf - 1, tf)
             terminal_event_num[4, i, j] = count_events(times_unc, tf - 1, tf)
 
-    event_num_mean = np.mean(event_num, axis=2)
-    # terminal_event_num_mean = np.mean(terminal_event_num, axis=2)
-    # event_num_var = np.var(event_num, axis=2)
-    # terminal_event_num_var = np.var(terminal_event_num, axis=2)
-
-    plt.clf()
-    plt.plot(budget, event_num_mean[0, :], marker='.', label="DEG")
-    plt.plot(budget, event_num_mean[1, :], marker='.', label="PRK")
-    plt.plot(budget, event_num_mean[2, :], marker='.', label="UNF")
-    plt.plot(budget, event_num_mean[3, :], marker='.', label="OPT")
-    plt.plot(budget, event_num_mean[4, :], marker='.', label="UNC")
-    plt.legend(loc="lower right")
-    plt.savefig('./result/max_int_total_events_vs_budget.pdf')
-
-    with open('./result/max_int_events_vs_budget.pickle', 'wb') as f:
-        pickle.dump([event_num, terminal_event_num, t_opt, deg, weight,
-                     budget, n, mu, alpha, w, t0, tf, b, d, itr, RND_SEED], f)
-
-    sio.savemat('./result/max_int_events_vs_budget.mat',
-                {'event_num': event_num, 'terminal_event_num': terminal_event_num, 't_opt': t_opt, 'deg': deg, 'weight': weight,
-                 'budget': budget, 'n': n, 'mu': mu, 'alpha': alpha, 'w': w, 't0': t0, 'tf': tf, 'b': b, 'd': d, 'seed': RND_SEED})
+    data = {'event_num': event_num, 'terminal_event_num': terminal_event_num, 't_opt': t_opt, 'deg': deg,
+            'weight': weight, 'budget': budget, 'n': n, 'mu': mu, 'alpha': alpha, 'w': w, 't0': t0, 'tf': tf, 'b': b,
+            'd': d, 'seed': RND_SEED}
+    sio.savemat('./result/mat/max_int_events_vs_budget.mat', data)
+    with open('./result/pickle/max_int_events_vs_budget.pickle', 'wb') as f:
+        pickle.dump(data, f)
     return
 
 
-def shaping_obj_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, ell):
+def shaping_obj_vs_budget(budget, n, mu, alpha, w, t0, tf, b, ell):
     deg = np.zeros(n)
     for j in range(n):
         deg[j] = np.count_nonzero(alpha[j, :])
@@ -290,11 +238,11 @@ def shaping_obj_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, ell):
     pr = nx.pagerank(graph)
     weight = np.asanyarray(list(pr.values()))
 
-    obj = np.zeros((4, len(budgets)))
-    t_opt = np.zeros((len(budgets), n))
-    u_opt = np.zeros((len(budgets), n))
-    for i in range(len(budgets)):
-        c = budgets[i]
+    obj = np.zeros((4, len(budget)))
+    t_opt = np.zeros((len(budget), n))
+    u_opt = np.zeros((len(budget), n))
+    for i in range(len(budget)):
+        c = budget[i]
         t_opt[i, :], u_opt[i, :] = activity_shaping(b, c, ell, t0, tf, alpha, w)
         obj[0, i], _ = eval_activity_shaping(np.zeros(n), (deg / sum(deg)) * (c / tf) * np.ones(n), ell, tf, alpha, w)
         obj[1, i], _ = eval_activity_shaping(np.zeros(n), weight * (c / tf) * np.ones(n), ell, tf, alpha, w)
@@ -302,20 +250,11 @@ def shaping_obj_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, ell):
         obj[3, i], _ = eval_activity_shaping(t_opt[i, :], u_opt[i, :], ell, tf, alpha, w)
         print("used_budget={}, total_budget={}, obj={}".format(np.dot(tf-t_opt[i, :], u_opt[i, :]), c, obj[:,i]))
 
-    plt.clf()
-    plt.plot(budgets, obj[0, :], label="DEG")
-    plt.plot(budgets, obj[1, :], label="PRK")
-    plt.plot(budgets, obj[2, :], label="UNF")
-    plt.plot(budgets, obj[3, :], label="OPT")
-    plt.legend(loc="upper left")
-    plt.savefig('./result/shaping_obj_vs_budget.pdf')
-
-    with open('./result/shaping_obj_vs_budget.pickle', 'wb') as f:
-        pickle.dump([obj, t_opt, u_opt, budgets, n, mu, alpha, w, t0, tf, b, ell, RND_SEED], f)
-
-    sio.savemat('./result/shaping_obj_vs_budget.mat',
-                {'obj': obj, 't_opt': t_opt, 'u_opt': u_opt, 'budget': budgets, 'n': n, 'mu': mu, 'alpha': alpha,
-                 'w': w, 't0': t0, 'tf': tf, 'b': b, 'ell': ell, 'seed': RND_SEED})
+    data = {'obj': obj, 't_opt': t_opt, 'u_opt': u_opt, 'budget': budget, 'n': n, 'mu': mu, 'alpha': alpha,
+                 'w': w, 't0': t0, 'tf': tf, 'b': b, 'ell': ell, 'seed': RND_SEED}
+    sio.savemat('./result/mat/shaping_obj_vs_budget.mat', data)
+    with open('./result/pickle/shaping_obj_vs_budget.pickle', 'wb') as f:
+        pickle.dump(data, f)
     return
 
 
@@ -354,16 +293,16 @@ def shaping_events_vs_budget(budget, n, mu, alpha, w, t0, tf, b, ell, itr):
         for j in range(len(budget)):
             obj[i, j] = norm(terminal_event_num[i, j, :] - ell) ** 2
 
-    with open('./result/shaping_events_vs_budget.pickle', 'wb') as f:
-        pickle.dump([terminal_event_num, obj, t_opt, deg, weight, budget, n, mu, alpha, w, t0, tf, b, ell, itr, RND_SEED], f)
-
-    sio.savemat('./result/shaping_events_vs_budget.mat',
-                {'terminal_event_num': terminal_event_num, 'obj': obj, 't_opt': t_opt, 'deg': deg, 'weight': weight, 'budget': budget,
-                 'n': n, 'mu': mu, 'alpha': alpha, 'w': w, 't0': t0, 'tf': tf, 'b': b, 'ell': ell, 'seed': RND_SEED})
+    data = {'terminal_event_num': terminal_event_num, 'obj': obj, 't_opt': t_opt, 'deg': deg, 'weight': weight,
+            'budget': budget, 'n': n, 'mu': mu, 'alpha': alpha, 'w': w, 't0': t0, 'tf': tf, 'b': b, 'ell': ell,
+            'seed': RND_SEED}
+    sio.savemat('./result/mat/shaping_events_vs_budget.mat', data)
+    with open('./result/pickle/shaping_events_vs_budget.pickle', 'wb') as f:
+        pickle.dump(data, f)
     return
 
 
-def shaping_int_obj_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, ell):
+def shaping_int_obj_vs_budget(budget, n, mu, alpha, w, t0, tf, b, ell):
     deg = np.zeros(n)
     for j in range(n):
         deg[j] = np.count_nonzero(alpha[j, :])
@@ -372,11 +311,11 @@ def shaping_int_obj_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, ell):
     pr = nx.pagerank(graph)
     weight = np.asanyarray(list(pr.values()))
 
-    obj = np.zeros((4, len(budgets)))
-    t_opt = np.zeros((len(budgets), n))
-    u_opt = np.zeros((len(budgets), n))
-    for i in range(len(budgets)):
-        c = budgets[i]
+    obj = np.zeros((4, len(budget)))
+    t_opt = np.zeros((len(budget), n))
+    u_opt = np.zeros((len(budget), n))
+    for i in range(len(budget)):
+        c = budget[i]
         t_opt[i, :], u_opt[i, :] = activity_shaping_int(b, c, ell, t0, tf, alpha, w)
         obj[0, i], _ = eval_activity_shaping_int(tf * np.ones(n), (deg / sum(deg)) * (c / tf) * np.ones(n), ell, tf, alpha, w)
         obj[1, i], _ = eval_activity_shaping_int(tf * np.ones(n), weight * (c / tf) * np.ones(n), ell, tf, alpha, w)
@@ -384,20 +323,11 @@ def shaping_int_obj_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, ell):
         obj[3, i], _ = eval_activity_shaping_int(t_opt[i, :], u_opt[i, :], ell, tf, alpha, w)
         print("used_budget={}, total_budget={}, obj={}".format(np.dot(t_opt[i, :], u_opt[i, :]), c, obj[:,i]))
 
-    plt.clf()
-    plt.plot(budgets, obj[0, :], label="DEG")
-    plt.plot(budgets, obj[1, :], label="PRK")
-    plt.plot(budgets, obj[2, :], label="UNF")
-    plt.plot(budgets, obj[3, :], label="OPT")
-    plt.legend(loc="upper left")
-    plt.savefig('./result/shaping_int_obj_vs_budget.pdf')
-
-    with open('./result/shaping_int_obj_vs_budget.pickle', 'wb') as f:
-        pickle.dump([obj, t_opt, u_opt, budgets, n, mu, alpha, w, t0, tf, b, ell, RND_SEED], f)
-
-    sio.savemat('./result/shaping_int_obj_vs_budget.mat',
-                {'obj': obj, 't_opt': t_opt, 'u_opt': u_opt, 'budget': budgets, 'n': n, 'mu': mu, 'alpha': alpha,
-                 'w': w, 't0': t0, 'tf': tf, 'b': b, 'ell': ell, 'seed': RND_SEED})
+    data = {'obj': obj, 't_opt': t_opt, 'u_opt': u_opt, 'budget': budget, 'n': n, 'mu': mu, 'alpha': alpha, 'w': w,
+            't0': t0, 'tf': tf, 'b': b, 'ell': ell, 'seed': RND_SEED}
+    sio.savemat('./result/mat/shaping_int_obj_vs_budget.mat', data)
+    with open('./result/pickle/shaping_int_obj_vs_budget.pickle', 'wb') as f:
+        pickle.dump(data, f)
     return
 
 
@@ -438,12 +368,12 @@ def shaping_int_events_vs_budget(budget, n, mu, alpha, w, t0, tf, b, ell, base_a
         for j in range(len(budget)):
             obj[i, j] = norm(event_num[i, j, :] - ell)**2
 
-    with open('./result/shaping_int_events_vs_budget.pickle', 'wb') as f:
-        pickle.dump([event_num, obj, t_opt, u_opt, deg, weight, budget, n, mu, alpha, w, t0, tf, b, ell, base_activity, itr, RND_SEED], f)
-
-    sio.savemat('./result/shaping_int_events_vs_budget.mat',
-                {'event_num': event_num, 'obj': obj, 't_opt': t_opt, 'u_opt': u_opt, 'deg': deg, 'weight': weight, 'budget': budget,
-                 'n': n, 'mu': mu, 'alpha': alpha, 'w': w, 't0': t0, 'tf': tf, 'b': b, 'ell': ell, 'base_activity': base_activity, 'seed': RND_SEED})
+    data = {'event_num': event_num, 'obj': obj, 't_opt': t_opt, 'u_opt': u_opt, 'deg': deg, 'weight': weight,
+            'budget': budget, 'n': n, 'mu': mu, 'alpha': alpha, 'w': w, 't0': t0, 'tf': tf, 'b': b, 'ell': ell,
+            'base_activity': base_activity, 'seed': RND_SEED}
+    sio.savemat('./result/mat/shaping_int_events_vs_budget.mat', data)
+    with open('./result/pickle/shaping_int_events_vs_budget.pickle', 'wb') as f:
+        pickle.dump(data, f)
     return
 
 
@@ -461,18 +391,17 @@ def max_int_events_vs_time(budget, n, mu, alpha, w, t0, tf, b, d, itr):
     users = np.zeros([5, itr], dtype=object)
     t_opt = activity_max_int(b, budget, d, t0, tf, alpha, w)
     for i in range(itr):
-        times[0,i], users[0,i] = generate_events(t0, tf, mu, alpha, lambda t: u_opt_dec(t, t_opt, n, b), g=g)
-        times[1,i], users[1,i] = generate_events(t0, tf, mu, alpha, lambda t: u_unf(t, tf, budget, n), g=g)
-        times[2,i], users[2,i] = generate_events(t0, tf, mu, alpha, lambda t: u_deg(t, tf, budget, deg), g=g)
-        times[3,i], users[3,i] = generate_events(t0, tf, mu, alpha, lambda t: u_prk(t, tf, budget, weight), g=g)
-        times[4,i], users[4,i] = generate_events(t0, tf, mu, alpha)
+        times[0, i], users[0, i] = generate_events(t0, tf, mu, alpha, lambda t: u_opt_dec(t, t_opt, n, b), g=g)
+        times[1, i], users[1, i] = generate_events(t0, tf, mu, alpha, lambda t: u_unf(t, tf, budget, n), g=g)
+        times[2, i], users[2, i] = generate_events(t0, tf, mu, alpha, lambda t: u_deg(t, tf, budget, deg), g=g)
+        times[3, i], users[3, i] = generate_events(t0, tf, mu, alpha, lambda t: u_prk(t, tf, budget, weight), g=g)
+        times[4, i], users[4, i] = generate_events(t0, tf, mu, alpha)
 
-    with open('./result/max_int_events_vs_time.pickle', 'wb') as f:
-        pickle.dump([t_opt, times, users, deg, weight, budget, n, mu, alpha, w, t0, tf, b, d, itr, RND_SEED], f)
-
-    sio.savemat('./result/max_int_events_vs_time.mat',
-                {'t_opt': t_opt, 'times': times, 'users': users, 'deg': deg, 'weight': weight, 'budget': budget,
-                 'n': n, 'mu': mu, 'alpha': alpha, 'w': w, 't0': t0, 'tf': tf, 'b': b, 'd': d, 'seed': RND_SEED})
+    data = {'t_opt': t_opt, 'times': times, 'users': users, 'deg': deg, 'weight': weight, 'budget': budget, 'n': n,
+            'mu': mu, 'alpha': alpha, 'w': w, 't0': t0, 'tf': tf, 'b': b, 'd': d, 'seed': RND_SEED}
+    sio.savemat('./result/mat/max_int_events_vs_time.mat', data)
+    with open('./result/pickle/max_int_events_vs_time.pickle', 'wb') as f:
+        pickle.dump(data, f)
     return
 
 
@@ -490,18 +419,17 @@ def shaping_int_events_vs_time(budget, n, mu, alpha, w, t0, tf, b, ell, base_act
     users = np.zeros([5, itr], dtype=object)
     t_opt, u_opt = activity_shaping_int(b, budget, ell - base_activity, t0, tf, alpha, w)
     for i in range(itr):
-        times[0,i], users[0,i] = generate_events(t0, tf, mu, alpha, lambda t: [u_opt[k] * (t < t_opt[k]) for k in range(n)], g=g)
-        times[1,i], users[1,i] = generate_events(t0, tf, mu, alpha, lambda t: u_unf(t, tf, budget, n), g=g)
-        times[2,i], users[2,i] = generate_events(t0, tf, mu, alpha, lambda t: u_deg(t, tf, budget, deg), g=g)
-        times[3,i], users[3,i] = generate_events(t0, tf, mu, alpha, lambda t: u_prk(t, tf, budget, weight), g=g)
-        times[4,i], users[4,i] = generate_events(t0, tf, mu, alpha)
-
-    with open('./result/shaping_int_events_vs_time.pickle', 'wb') as f:
-        pickle.dump([t_opt, times, users, deg, weight, budget, n, mu, alpha, w, t0, tf, b, ell, base_activity, itr, RND_SEED], f)
-
-    sio.savemat('./result/shaping_int_events_vs_time.mat',
-                {'t_opt': t_opt, 'times': times, 'users': users, 'deg': deg, 'weight': weight, 'budget': budget,
-                 'n': n, 'mu': mu, 'alpha': alpha, 'w': w, 't0': t0, 'tf': tf, 'b': b, 'ell': ell, 'base_activity': base_activity, 'seed': RND_SEED})
+        times[0, i], users[0, i] = generate_events(t0, tf, mu, alpha, lambda t: [u_opt[k] * (t < t_opt[k]) for k in range(n)], g=g)
+        times[1, i], users[1, i] = generate_events(t0, tf, mu, alpha, lambda t: u_unf(t, tf, budget, n), g=g)
+        times[2, i], users[2, i] = generate_events(t0, tf, mu, alpha, lambda t: u_deg(t, tf, budget, deg), g=g)
+        times[3, i], users[3, i] = generate_events(t0, tf, mu, alpha, lambda t: u_prk(t, tf, budget, weight), g=g)
+        times[4, i], users[4, i] = generate_events(t0, tf, mu, alpha)
+    data = {'t_opt': t_opt, 'times': times, 'users': users, 'deg': deg, 'weight': weight, 'budget': budget, 'n': n, 
+            'mu': mu, 'alpha': alpha, 'w': w, 't0': t0, 'tf': tf, 'b': b, 'ell': ell, 'base_activity': base_activity, 
+            'seed': RND_SEED}
+    sio.savemat('./result/mat/shaping_int_events_vs_time.mat', data)
+    with open('./result/pickle/shaping_int_events_vs_time.pickle', 'wb') as f:
+        pickle.dump(data, f)
     return
 
 
@@ -509,7 +437,7 @@ def main():
     np.random.seed(RND_SEED)
     t0 = 0
     tf = 100
-    n = 64
+    n = 32
     sparsity = 0.3
     mu_max = 0.01
     alpha_max = 0.1
@@ -519,7 +447,7 @@ def main():
     c = n * tf * mu_max
     d = np.ones(n)
 
-    budgets = np.array([0.5, 10, 20, 50, 100, 150, 200, 250])
+    budget = np.array([0.5, 10]) #, 20, 50, 100, 150, 200, 250])
     itr = 30
 
     mu, alpha = generate_model(n, sparsity, mu_max, alpha_max)
@@ -535,18 +463,18 @@ def main():
     # mehrdad_max_events_and_obj_vs_budget('./data/mehrdad-64.mat')
 
     # events_vs_time(c*10, n, mu, alpha, w, t0, tf, b, d)
-    # max_obj_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, d)
-    # max_int_obj_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, d)
-    # max_events_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, d, itr)
-    # max_int_events_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, d, itr)
+    # max_obj_vs_budget(budget, n, mu, alpha, w, t0, tf, b, d)
+    # max_int_obj_vs_budget(budget, n, mu, alpha, w, t0, tf, b, d)
+    # max_events_vs_budget(budget, n, mu, alpha, w, t0, tf, b, d, itr)
+    # max_int_events_vs_budget(budget, n, mu, alpha, w, t0, tf, b, d, itr)
 
-    shaping_obj_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, ell)
-    # shaping_events_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, ell, itr)
-    # shaping_int_obj_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, ell_int)
-    # shaping_int_events_vs_budget(budgets, n, mu, alpha, w, t0, tf, b, ell_int, base_activity, itr)
+    # shaping_obj_vs_budget(budget, n, mu, alpha, w, t0, tf, b, ell)
+    # shaping_events_vs_budget(budget, n, mu, alpha, w, t0, tf, b, ell, itr)
+    shaping_int_obj_vs_budget(budget, n, mu, alpha, w, t0, tf, b, ell_int)
+    # shaping_int_events_vs_budget(budget, n, mu, alpha, w, t0, tf, b, ell_int, base_activity, itr)
 
-    # max_int_events_vs_time(budgets[-1], n, mu, alpha, w, t0, tf, b, d, itr)
-    # shaping_int_events_vs_time(budgets[-1], n, mu, alpha, w, t0, tf, b, ell, base_activity, itr)
+    # max_int_events_vs_time(budget[-1], n, mu, alpha, w, t0, tf, b, d, itr)
+    # shaping_int_events_vs_time(budget[-1], n, mu, alpha, w, t0, tf, b, ell, base_activity, itr)
 
 
 if __name__ == '__main__':

@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import pickle
 
 
-def tex_plot(x, y, name):
+def tex_plot(x, y, path):
     # Set latex params
     plt.rc('text', usetex=True)
     plt.rc('font', family='serif', size=18)
@@ -39,21 +39,47 @@ def tex_plot(x, y, name):
     # plt.autoscale(enable=True, axis='x', tight=True)
 
     # Save and show the plot
-    plt.savefig(name + '.pdf')
+    plt.savefig(path + '.pdf')
     # plt.show()
     return
 
 
 if __name__ == '__main__':
-    # Plot data name
-    name = 'shaping_obj_vs_budget'
+    # # Maximization Terminal Objective vs Budget
 
-    # Load data
-    with open('result/' + name + '.pickle', 'rb') as f:
-        obj, t_opt, u_opt, budgets, n, mu, alpha, w, t0, tf, b, ell, RND_SEED = pickle.load(f)
-    obj_mehrdad = np.array([41.0602, 32.6496, 25.4690, 14.2205, 11.8728, 11.5925, 11.5925, 11.5925])
-    obj = np.vstack((obj, obj[-1, :]))
-    obj[-2, :] = obj_mehrdad
+    # # Maximization Terminal EventsNum vs Budget
 
-    # Pretty plot and save using tex_plot
-    tex_plot(budgets, obj, name)
+    # # Maximization Integral Objective vs Budget
+
+    # # Maximization Integral EventsNum vs Budget
+
+    # # # Shaping Terminal Objective vs Budget
+    # # load data
+    # name = 'shaping_obj_vs_budget'
+    # with open('result/pickle/' + name + '.pickle', 'rb') as f:
+    #     obj, t_opt, u_opt, budgets, n, mu, alpha, w, t0, tf, b, ell, RND_SEED = pickle.load(f)
+    # obj_mehrdad = np.array([41.0602, 32.6496, 25.4690, 14.2205, 11.8728, 11.5925, 11.5925, 11.5925])
+    # obj = np.vstack((obj, obj[-1, :]))
+    # obj[-2, :] = obj_mehrdad
+    # # plot and save
+    # tex_plot(budgets, obj, 'result/image/'+name)
+
+    # # # Shaping Terminal EventsNum vs Budget
+    # # load data
+    # name = 'shaping_events_vs_budget'
+    # with open('result/pickle/' + name + '.pickle', 'rb') as f:
+    #     obj, t_opt, u_opt, budgets, n, mu, alpha, w, t0, tf, b, ell, RND_SEED = pickle.load(f)
+    # # plot and save
+    # tex_plot(budgets, obj, 'result/image/' + name)
+
+    # # Shaping Integral Objective vs Budget
+    # load data
+    name = 'shaping_int_obj_vs_budget'
+    with open('result/pickle/' + name + '.pickle', 'rb') as f:
+        data = pickle.load(f)
+    # plot and save
+    tex_plot(data['budgets'], data['obj'], 'result/image/'+name)
+
+    # # Shaping Integral EventsNum vs Budget
+
+
