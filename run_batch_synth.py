@@ -437,11 +437,11 @@ def main():
     np.random.seed(RND_SEED)
     t0 = 0
     tf = 100
-    n = 32
+    n = 64
     sparsity = 0.3
     mu_max = 0.01
     alpha_max = 0.1
-    w = 1
+    w = 2
 
     b = 100 * mu_max
     c = n * tf * mu_max
@@ -470,8 +470,8 @@ def main():
 
     # shaping_obj_vs_budget(budget, n, mu, alpha, w, t0, tf, b, ell)
     # shaping_events_vs_budget(budget, n, mu, alpha, w, t0, tf, b, ell, itr)
-    # shaping_int_obj_vs_budget(budget, n, mu, alpha, w, t0, tf, b, ell_int)
-    # shaping_int_events_vs_budget(budget, n, mu, alpha, w, t0, tf, b, ell_int, base_activity, itr)
+    shaping_int_obj_vs_budget(budget, n, mu, alpha, w, t0, tf, b, ell_int)
+    shaping_int_events_vs_budget(budget, n, mu, alpha, w, t0, tf, b, ell_int, base_activity, itr)
 
     # max_int_events_vs_time(budget[-1], n, mu, alpha, w, t0, tf, b, d, itr)
     # shaping_int_events_vs_time(budget[-1], n, mu, alpha, w, t0, tf, b, ell, base_activity, itr)
