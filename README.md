@@ -8,7 +8,7 @@ Generate events for the multi-dimensional Hawkes process.
 ## Inference
 Can be used to learn latent influence matrix from events data. 
 
-## Activity maximization 
+## Activity Maximization 
 
 ## Activity Shaping
 
