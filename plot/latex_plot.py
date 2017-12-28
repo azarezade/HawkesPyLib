@@ -53,21 +53,24 @@ if __name__ == '__main__':
 
     # # Maximization Integral EventsNum vs Budget
 
-    # # # Shaping Terminal Objective vs Budget
-    # # load data
-    # name = 'shaping_obj_vs_budget'
-    # with open('result/pickle/' + name + '.pickle', 'rb') as f:
-    #     obj, t_opt, u_opt, budgets, n, mu, alpha, w, t0, tf, b, ell, RND_SEED = pickle.load(f)
+    # # Shaping Terminal Objective vs Budget
+    # load data
+    name = 'shaping_obj_vs_budget'
+    with open('result/' + name + '.pickle', 'rb') as f:
+        data = pickle.load(f)
     # obj_mehrdad = np.array([41.0602, 32.6496, 25.4690, 14.2205, 11.8728, 11.5925, 11.5925, 11.5925])
-    # obj = np.vstack((obj, obj[-1, :]))
-    # obj[-2, :] = obj_mehrdad
-    # # plot and save
-    # tex_plot(budgets, obj, 'result/image/'+name)
+    obj_mehrdad = np.array([41.0602, 32.6496])
+    obj = data['obj']
+    budget = data['budget']
+    obj = np.vstack((obj, obj[-1, :]))
+    obj[-2, :] = obj_mehrdad
+    # plot and save
+    tex_plot(budget, obj, 'result/image/'+name)
 
     # # # Shaping Terminal EventsNum vs Budget
     # # load data
     # name = 'shaping_events_vs_budget'
-    # with open('result/pickle/' + name + '.pickle', 'rb') as f:
+    # with open('result/' + name + '.pickle', 'rb') as f:
     #     obj, t_opt, u_opt, budgets, n, mu, alpha, w, t0, tf, b, ell, RND_SEED = pickle.load(f)
     # # plot and save
     # tex_plot(budgets, obj, 'result/image/' + name)
@@ -75,10 +78,10 @@ if __name__ == '__main__':
     # # Shaping Integral Objective vs Budget
     # load data
     name = 'shaping_int_obj_vs_budget'
-    with open('result/pickle/' + name + '.pickle', 'rb') as f:
+    with open('result/' + name + '.pickle', 'rb') as f:
         data = pickle.load(f)
     # plot and save
-    tex_plot(data['budgets'], data['obj'], 'result/image/'+name)
+    tex_plot(data['budget'], data['obj'], 'result/image/'+name)
 
     # # Shaping Integral EventsNum vs Budget
 
