@@ -55,35 +55,36 @@ def tex_plot(x, y, path, legend):
 
 
 def main():
-    # # Maximization Terminal Objective vs Budget
+    # Maximization Terminal Objective vs Budget
 
-    # # Maximization Terminal EventsNum vs Budget
+    # Maximization Terminal EventsNum vs Budget
 
-    # # Maximization Integral Objective vs Budget
+    # Maximization Integral Objective vs Budget
 
-    # # Maximization Integral EventsNum vs Budget
+    # Maximization Integral EventsNum vs Budget
 
-    # # Shaping Terminal Objective vs Budget
+    # Shaping Terminal Objective vs Budget
     path = '../result/shaping_obj_vs_budget'
     obj, budget = load(path)
     obj_opl = np.array([41.0602, 32.6496, 25.4690, 14.2205, 11.8728, 11.5925, 11.5925, 11.5925])
     obj = np.vstack((obj, obj_opl))
     tex_plot(budget, obj, path, legend=['OPT', 'DEG', 'PRK', 'UNF', 'OPL'])
 
-    # # Shaping Terminal EventsNum vs Budget
+    # Shaping Terminal EventsNum vs Budget
     path = '../result/shaping_events_vs_budget'
     obj, budget = load(path)
     tex_plot(budget, obj, path, legend=['OPT', 'DEG', 'PRK', 'UNF'])
 
-    # # Shaping Integral Objective vs Budget
+    # Shaping Integral Objective vs Budget
     path = '../result/shaping_int_obj_vs_budget'
     obj, budget = load(path)
     tex_plot(budget, obj, path, legend=['OPT', 'DEG', 'PRK', 'UNF'])
 
-    # # Shaping Integral EventsNum vs Budget
+    # Shaping Integral EventsNum vs Budget
     path = '../result/shaping_int_events_vs_budget'
     obj, budget = load(path)
     tex_plot(budget, obj, path, legend=['OPT', 'DEG', 'PRK', 'UNF'])
+
     return
 
 
