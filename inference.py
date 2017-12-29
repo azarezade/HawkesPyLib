@@ -42,4 +42,4 @@ def inference(dataset, decays):
 
 
 if __name__ == "__main__":
-    inference("club", 20000)
+    inference("club", 25000)
