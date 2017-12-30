@@ -441,11 +441,8 @@ def main():
     mu_max = 0.01
     alpha_max = 0.1
     w = 2
-
     b = 100 * mu_max
-    c = n * tf * mu_max
     d = np.ones(n)
-
     budget = np.array([0.5, 10, 20, 50, 100, 150, 200, 250])
     itr = 30
 
@@ -461,7 +458,6 @@ def main():
 
     # mehrdad_max_events_and_obj_vs_budget('./data/mehrdad-64.mat')
 
-    # events_vs_time(c*10, n, mu, alpha, w, t0, tf, b, d)
     # max_obj_vs_budget(budget, n, mu, alpha, w, t0, tf, b, d)
     # max_int_obj_vs_budget(budget, n, mu, alpha, w, t0, tf, b, d)
     # max_events_vs_budget(budget, n, mu, alpha, w, t0, tf, b, d, itr)
@@ -469,8 +465,8 @@ def main():
 
     # shaping_obj_vs_budget(budget, n, mu, alpha, w, t0, tf, b, ell)
     # shaping_events_vs_budget(budget, n, mu, alpha, w, t0, tf, b, ell, itr)
-    shaping_int_obj_vs_budget(budget, n, mu, alpha, w, t0, tf, b, ell_int)
-    shaping_int_events_vs_budget(budget, n, mu, alpha, w, t0, tf, b, ell_int, base_activity, itr)
+    # shaping_int_obj_vs_budget(budget, n, mu, alpha, w, t0, tf, b, ell_int)
+    # shaping_int_events_vs_budget(budget, n, mu, alpha, w, t0, tf, b, ell_int, base_activity, itr)
 
     # max_int_events_vs_time(budget[-1], n, mu, alpha, w, t0, tf, b, d, itr)
     # shaping_int_events_vs_time(budget[-1], n, mu, alpha, w, t0, tf, b, ell, base_activity, itr)
