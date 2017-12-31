@@ -147,8 +147,9 @@ def max_events_vs_budget(budget, n, mu, alpha, w, t0, tf, b, d, itr):
             terminal_event_num[2, i, j] = count_events(times_prk, tf-1, tf)
             terminal_event_num[3, i, j] = count_events(times_uniform, tf-1, tf)
             # terminal_event_num[4, i, j] = count_events(times_unc, tf - 1, tf)
+    obj = np.mean(terminal_event_num, 2)
 
-    data = {'event_num': event_num, 'terminal_event_num': terminal_event_num, 't_opt': t_opt, 'deg': deg,
+    data = {'obj': obj, 'event_num': event_num, 'terminal_event_num': terminal_event_num, 't_opt': t_opt, 'deg': deg,
             'weight': weight, 'budget': budget, 'n': n, 'mu': mu, 'alpha': alpha, 'w': w, 't0': t0, 'tf': tf, 'b': b,
             'd': d, 'seed': RND_SEED}
     sio.savemat('./result/max_events_vs_budget.mat', data)
@@ -219,7 +220,8 @@ def max_int_events_vs_budget(budget, n, mu, alpha, w, t0, tf, b, d, itr):
             terminal_event_num[3, i, j] = count_events(times_uniform, tf - 1, tf)
             # terminal_event_num[4, i, j] = count_events(times_unc, tf - 1, tf)
 
-    data = {'event_num': event_num, 'terminal_event_num': terminal_event_num, 't_opt': t_opt, 'deg': deg,
+    obj = np.mean(event_num, 2)
+    data = {'obj': obj, 'event_num': event_num, 'terminal_event_num': terminal_event_num, 't_opt': t_opt, 'deg': deg,
             'weight': weight, 'budget': budget, 'n': n, 'mu': mu, 'alpha': alpha, 'w': w, 't0': t0, 'tf': tf, 'b': b,
             'd': d, 'seed': RND_SEED}
     sio.savemat('./result/max_int_events_vs_budget.mat', data)
@@ -459,8 +461,8 @@ def main():
     # mehrdad_max_events_and_obj_vs_budget('./data/mehrdad-64.mat')
 
     # max_obj_vs_budget(budget, n, mu, alpha, w, t0, tf, b, d)
-    # max_int_obj_vs_budget(budget, n, mu, alpha, w, t0, tf, b, d)
     # max_events_vs_budget(budget, n, mu, alpha, w, t0, tf, b, d, itr)
+    # max_int_obj_vs_budget(budget, n, mu, alpha, w, t0, tf, b, d)
     # max_int_events_vs_budget(budget, n, mu, alpha, w, t0, tf, b, d, itr)
 
     # shaping_obj_vs_budget(budget, n, mu, alpha, w, t0, tf, b, ell)

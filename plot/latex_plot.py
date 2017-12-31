@@ -55,9 +55,21 @@ def tex_plot(x, y, path, legend):
 
 
 def main():
+    # TODO: Correct the x-label and y-label
+
     # Maximization Terminal Objective vs Budget
+    path = '../result/max_obj_vs_budget'
+    obj, budget = load(path)
+    tex_plot(budget, obj, path, legend=['OPT', 'DEG', 'PRK', 'UNF'])
 
     # Maximization Terminal EventsNum vs Budget
+    path = '../result/max_events_vs_budget'
+    # terminal_event_num, budget = load(path)
+    with open(path + '.pickle', 'rb') as f:
+        data = pickle.load(f)
+    d = data['terminal_event_num']
+    obj = np.mean(d, 2)
+    tex_plot(data['budget'], obj, path, legend=['OPT', 'DEG', 'PRK', 'UNF'])
 
     # Maximization Integral Objective vs Budget
 
