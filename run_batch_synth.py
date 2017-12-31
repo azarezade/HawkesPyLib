@@ -442,36 +442,37 @@ def main():
     sparsity = 0.3
     mu_max = 0.01
     alpha_max = 0.1
-    w = 2
+    w_m = 2
+    w_s = 1
     b = 100 * mu_max
     d = np.ones(n)
     budget = np.array([0.5, 10, 20, 50, 100, 150, 200, 250])
-    itr = 30
+    itr = 20
 
     mu, alpha = generate_model(n, sparsity, mu_max, alpha_max)
 
     # ell for shaping terminal
     ell = 2 * np.array([0.250, 0.250, 0.500, 0.7500] * int(n / 4))
-    ell = ell - np.dot(g_max_int(0, tf, alpha, w), mu)
+    ell = ell - np.dot(g_max_int(0, tf, alpha, w_s), mu)
     # ell for shaping integral
     ell_int = 6 * np.array([0.250, 0.250, 0.500, 0.7500] * int(n / 4))
-    base_activity = g_ls_int(tf, tf, alpha, w).dot(mu)
+    base_activity = g_ls_int(tf, tf, alpha, w_s).dot(mu)
     ell_int = ell_int + base_activity
 
     # mehrdad_max_events_and_obj_vs_budget('./data/mehrdad-64.mat')
 
-    # max_obj_vs_budget(budget, n, mu, alpha, w, t0, tf, b, d)
-    # max_events_vs_budget(budget, n, mu, alpha, w, t0, tf, b, d, itr)
-    # max_int_obj_vs_budget(budget, n, mu, alpha, w, t0, tf, b, d)
-    # max_int_events_vs_budget(budget, n, mu, alpha, w, t0, tf, b, d, itr)
+    # max_obj_vs_budget(budget, n, mu, alpha, w_m, t0, tf, b, d)
+    # max_events_vs_budget(budget, n, mu, alpha, w_s, t0, tf, b, d, itr)
+    # max_int_obj_vs_budget(budget, n, mu, alpha, w_m, t0, tf, b, d)
+    # max_int_events_vs_budget(budget, n, mu, alpha, w_m, t0, tf, b, d, itr)
 
-    # shaping_obj_vs_budget(budget, n, mu, alpha, w, t0, tf, b, ell)
-    # shaping_events_vs_budget(budget, n, mu, alpha, w, t0, tf, b, ell, itr)
-    # shaping_int_obj_vs_budget(budget, n, mu, alpha, w, t0, tf, b, ell_int)
-    # shaping_int_events_vs_budget(budget, n, mu, alpha, w, t0, tf, b, ell_int, base_activity, itr)
+    # shaping_obj_vs_budget(budget, n, mu, alpha, w_s, t0, tf, b, ell)
+    # shaping_events_vs_budget(budget, n, mu, alpha, w_s, t0, tf, b, ell, itr)
+    # shaping_int_obj_vs_budget(budget, n, mu, alpha, w_s, t0, tf, b, ell_int)
+    # shaping_int_events_vs_budget(budget, n, mu, alpha, w_s, t0, tf, b, ell_int, base_activity, itr)
 
-    # max_int_events_vs_time(budget[-1], n, mu, alpha, w, t0, tf, b, d, itr)
-    # shaping_int_events_vs_time(budget[-1], n, mu, alpha, w, t0, tf, b, ell, base_activity, itr)
+    # max_int_events_vs_time(budget[-1], n, mu, alpha, w_m, t0, tf, b, d, itr)
+    # shaping_int_events_vs_time(budget[-1], n, mu, alpha, w_s, t0, tf, b, ell, base_activity, itr)
 
 
 if __name__ == '__main__':
