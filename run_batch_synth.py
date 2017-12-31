@@ -442,8 +442,8 @@ def main():
     sparsity = 0.3
     mu_max = 0.01
     alpha_max = 0.1
-    w_m = 2
-    w_s = 1
+    w_m = 1
+    w_s = 2
     b = 100 * mu_max
     d = np.ones(n)
     budget = np.array([0.5, 10, 20, 50, 100, 150, 200, 250])
@@ -462,7 +462,7 @@ def main():
     # mehrdad_max_events_and_obj_vs_budget('./data/mehrdad-64.mat')
 
     # max_obj_vs_budget(budget, n, mu, alpha, w_m, t0, tf, b, d)
-    # max_events_vs_budget(budget, n, mu, alpha, w_s, t0, tf, b, d, itr)
+    # max_events_vs_budget(budget, n, mu, alpha, w_m, t0, tf, b, d, itr)
     # max_int_obj_vs_budget(budget, n, mu, alpha, w_m, t0, tf, b, d)
     # max_int_events_vs_budget(budget, n, mu, alpha, w_m, t0, tf, b, d, itr)
 
