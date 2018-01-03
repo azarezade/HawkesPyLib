@@ -485,12 +485,13 @@ def main():
     base_activity = g_ls_int(tf, tf, alpha, w).dot(mu)
     ell_int = ell_int + base_activity
 
-    data = {'t0': t0, 'tf': tf, 'n': n, 'sparsity': sparsity, 'mu_max': mu_max, 'alpha_max': alpha_max,
-            'w': w, 'b': b, 'd': d, 'budget': budget, 'itr': itr, 'mu': mu, 'alpha': alpha,
-            'ell': ell, 'ell_int': ell_int, 'base_activity': base_activity, 'seed': RND_SEED}
-    sio.savemat('./model/synth_n64_w' + str(w) + '.mat', data)
+    # data = {'t0': t0, 'tf': tf, 'n': n, 'sparsity': sparsity, 'mu_max': mu_max, 'alpha_max': alpha_max,
+    #         'w': w, 'b': b, 'd': d, 'budget': budget, 'itr': itr, 'mu': mu, 'alpha': alpha,
+    #         'ell': ell, 'ell_int': ell_int, 'base_activity': base_activity, 'seed': RND_SEED}
+    # sio.savemat('./model/synth_n64_w' + str(w) + '.mat', data)
 
-    # opl_max_obj_vs_budget('./result/opl_max.mat')
+    opl_max_events_vs_budget('./result/opl_max_obj_vs_budget.mat', itr)
+    opl_shaping_events_vs_budget('./result/opl_shaping_obj_vs_budget.mat', itr)
 
     # max_obj_vs_budget(budget, n, mu, alpha, w, t0, tf, b, d)
     # max_events_vs_budget(budget, n, mu, alpha, w, t0, tf, b, d, itr)
