@@ -13,7 +13,7 @@ def load(path):
     return obj, budget
 
 
-def tex_plot(x, y, path, legend):
+def tex_plot(x, y, path, xlabel, ylabel, legend):
     # Set latex params
     plt.rc('text', usetex=True)
     plt.rc('font', family='serif', size=18)
@@ -29,8 +29,8 @@ def tex_plot(x, y, path, legend):
     plt.gca().set_prop_cycle('color', ['blue', 'orange', 'green', 'crimson', 'purple'])
 
     # Set label and title
-    plt.xlabel(r'$c$ (bubget)', fontsize=20)
-    plt.ylabel(r'\vspace{-0.5mm} $\|\mathbb{E}[dN(T)] - \ell \|_2^2$', fontsize=20)
+    plt.xlabel(xlabel, fontsize=20)
+    plt.ylabel(ylabel, fontsize=20)
 
     # Set legend
     plt.legend(legend, loc='upper right', fontsize=16)
@@ -40,7 +40,7 @@ def tex_plot(x, y, path, legend):
     # plt.subplots_adjust(bottom=0.2)
 
     # Set grid
-    plt.grid(color='silver', linestyle='-', linewidth=0.5)
+    plt.grid(color='silver', linestyle='-', linewidth=0.5, alpha=0.5)
     # plt.grid(True)
 
     # Set axis properties
@@ -57,46 +57,59 @@ def tex_plot(x, y, path, legend):
 def main():
     # TODO: Correct the x-label and y-label
 
+    legend = ['OPT', 'DEG', 'PRK', 'UNF']
+    xlabel = r'$c$ (budget)'
+
     # Maximization Terminal Objective vs Budget
     path = '../result/max_obj_vs_budget'
+    ylabel = r'$w^T E[dN(T)]$'
     obj, budget = load(path)
-    tex_plot(budget, obj, path, legend=['OPT', 'DEG', 'PRK', 'UNF'])
+    tex_plot(budget, obj, path, xlabel, ylabel, legend)
 
-    # Maximization Terminal EventsNum vs Budget
+    # # Maximization Terminal EventsNum vs Budget
     path = '../result/max_events_vs_budget'
-    # terminal_event_num, budget = load(path)
-    with open(path + '.pickle', 'rb') as f:
-        data = pickle.load(f)
-    d = data['terminal_event_num']
-    obj = np.mean(d, 2)
-    tex_plot(data['budget'], obj, path, legend=['OPT', 'DEG', 'PRK', 'UNF'])
+    ylabel = r'$w^T\,\overline{dN(T)}$'
+    obj, budget = load(path)
+    tex_plot(budget, obj, path, xlabel, ylabel, legend)
 
     # Maximization Integral Objective vs Budget
+    path = '../result/max_int_obj_vs_budget'
+    ylabel = r'$w^T E[\int dN(s)\,ds]$'
+    # ylabel = r'$w^T \mathbb{E}[\int dN(s)\,ds]$'
+    obj, budget = load(path)
+    tex_plot(budget, obj, path, xlabel, ylabel, legend)
 
     # Maximization Integral EventsNum vs Budget
+    path = '../result/max_int_events_vs_budget'
+    ylabel = r'$w^T\,\overline{\int dN(s) ds}$'
+    obj, budget = load(path)
+    tex_plot(budget, obj, path, xlabel, ylabel, legend)
 
     # Shaping Terminal Objective vs Budget
     path = '../result/shaping_obj_vs_budget'
+    ylabel = r'$\|E[dN(T)] - \ell \|_2^2$'
     obj, budget = load(path)
     obj_opl = np.array([41.0602, 32.6496, 25.4690, 14.2205, 11.8728, 11.5925, 11.5925, 11.5925])
     obj = np.vstack((obj, obj_opl))
-    tex_plot(budget, obj, path, legend=['OPT', 'DEG', 'PRK', 'UNF', 'OPL'])
+    tex_plot(budget, obj, path, xlabel, ylabel, legend=['OPT', 'DEG', 'PRK', 'UNF', 'OPL'])
 
-    # Shaping Terminal EventsNum vs Budget
-    path = '../result/shaping_events_vs_budget'
-    obj, budget = load(path)
-    tex_plot(budget, obj, path, legend=['OPT', 'DEG', 'PRK', 'UNF'])
+    # # Shaping Terminal EventsNum vs Budget
+    # path = '../result/shaping_events_vs_budget'
+    # ylabel = r'$\|\overline{dN(T)} - \ell \|_2^2$'
+    # obj, budget = load(path)
+    # tex_plot(budget, obj, path, xlabel, ylabel, legend)
 
     # Shaping Integral Objective vs Budget
     path = '../result/shaping_int_obj_vs_budget'
+    ylabel = r'$\|E[\int dN(s) \, ds] - \ell \|_2^2$'
     obj, budget = load(path)
-    tex_plot(budget, obj, path, legend=['OPT', 'DEG', 'PRK', 'UNF'])
+    tex_plot(budget, obj, path, xlabel, ylabel, legend)
 
     # Shaping Integral EventsNum vs Budget
     path = '../result/shaping_int_events_vs_budget'
+    ylabel = r'$\|\overline{\int dN(s) ds} - \ell \|_2^2$'
     obj, budget = load(path)
-    tex_plot(budget, obj, path, legend=['OPT', 'DEG', 'PRK', 'UNF'])
-
+    tex_plot(budget, obj, path, xlabel, ylabel, legend)
     return
 
 
