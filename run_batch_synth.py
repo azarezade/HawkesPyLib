@@ -52,36 +52,57 @@ def count_user_events(times, users, n, a, b):
     return count
 
 
-def mehrdad_max_events_and_obj_vs_budget(data_path, itr=30):
-    g = lambda x: np.exp(-w * x)
-    data = sio.loadmat(data_path)
+def loadmat(matfile):
+    data = sio.loadmat(matfile)
     t0 = data['t0'][0][0]
     tf = data['tf'][0][0]
-    n = data['n'][0][0]
     w = data['w'][0][0]
     d = data['d'][:, 0]
-    budget = data['budget'][:, 0]
+    n = data['n'][0][0]
     mu = data['mu'][:, 0]
     alpha = data['alpha']
+    budget = data['budget'][:, 0]
     lambda_cam = data['lambda_cam']
+    return t0, tf, w, d, n, mu, alpha, budget, lambda_cam
+
+
+def mehrdad_max_obj_vs_budget(matfile):
+    g = lambda x: np.exp(-w * x)
+    t0, tf, w, d, n, mu, alpha, budget, lambda_cam = loadmat(matfile)
 
     obj = np.zeros(budget.shape[0])
-    event_num = np.zeros([len(budget), itr])
-    terminal_event_num = np.zeros([len(budget), itr])
-
     for i in range(budget.shape[0]):
         def u_mehrdad(t):
             return [lambda_cam[i, j] for j in range(n)]
         obj[i] = eval_activity_max(tf, u_mehrdad, d, t0, tf, alpha, w)
+    print(budget)
+    print(obj)
+    data = {'obj': obj, 'budget': budget, 'n': n, 'mu': mu, 'alpha': alpha, 'w': w, 't0': t0, 'tf': tf, 'd': d,
+            'seed': RND_SEED}
+    sio.savemat('./result/mehrdad_max_obj_vs_budget.mat', data)
+    with open('./result/mehrdad_max_obj_vs_budget.pickle', 'wb') as f:
+        pickle.dump(data, f)
+    return
+
+
+def mehrdad_max_events_vs_budget(matfile, itr):
+    g = lambda x: np.exp(-w * x)
+    t0, tf, w, d, n, mu, alpha, budget, lambda_cam = loadmat(matfile)
+
+    event_num = np.zeros([len(budget), itr])
+    terminal_event_num = np.zeros([len(budget), itr])
+    for i in range(budget.shape[0]):
+        def u_mehrdad(t):
+            return [lambda_cam[i, j] for j in range(n)]
         for j in range(itr):
             times_mehrdad, _ = generate_events(t0, tf, mu, alpha, u_mehrdad, g=g)
             event_num[i, j] = len(times_mehrdad)
             terminal_event_num[i, j] = count_events(times_mehrdad, tf - 1, tf)
-
+    obj = np.mean(terminal_event_num, 1)
     data = {'obj': obj, 'event_num': event_num, 'terminal_event_num': terminal_event_num, 'budget': budget, 'n': n,
             'mu': mu, 'alpha': alpha, 'w': w, 't0': t0, 'tf': tf, 'd': d, 'seed': RND_SEED}
-    sio.savemat('./result/mehrdad_max_events_and_obj_vs_budget.mat', data)
-    with open('./result/mehrdad_max_events_and_obj_vs_budget.pickle', 'wb') as f:
+    sio.savemat('./result/mehrdad_max_events_vs_budget.mat', data)
+    with open('./result/mehrdad_max_events_vs_budget.pickle', 'wb') as f:
         pickle.dump(data, f)
     return
 
@@ -459,7 +480,7 @@ def main():
     base_activity = g_ls_int(tf, tf, alpha, w_s).dot(mu)
     ell_int = ell_int + base_activity
 
-    # mehrdad_max_events_and_obj_vs_budget('./data/mehrdad-64.mat')
+    mehrdad_max_obj_vs_budget('./result/mehrdad_max.mat')
 
     # max_obj_vs_budget(budget, n, mu, alpha, w_m, t0, tf, b, d)
     # max_events_vs_budget(budget, n, mu, alpha, w_m, t0, tf, b, d, itr)
