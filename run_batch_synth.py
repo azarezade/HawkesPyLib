@@ -3,14 +3,13 @@
 # # Set limit to the number of cores:
 # import mkl
 # mkl.set_num_threads(n)
+# import matplotlib as mpl; mpl.use('Agg')
 
 import numpy as np
 import scipy.io as sio
-import matplotlib as mpl; mpl.use('Agg')
-import matplotlib.pyplot as plt
 import pickle
 import networkx as nx
-from numpy.linalg import inv, norm
+from numpy.linalg import norm
 from activity_maximization import activity_max, activity_max_int, eval_activity_max, eval_activity_max_int
 from event_generation import generate_model, generate_events
 from activity_shaping import eval_activity_shaping, activity_shaping, g_ls_int, g_max_int, activity_shaping_int, eval_activity_shaping_int
@@ -59,49 +58,57 @@ def loadmat(matfile):
     w = data['w'][0][0]
     d = data['d'][:, 0]
     n = data['n'][0][0]
+    seed = data['seed'][0][0]
+    ell = data['ell'][:, 0]
     mu = data['mu'][:, 0]
     alpha = data['alpha']
     budget = data['budget'][:, 0]
-    lambda_cam = data['lambda_cam']
-    return t0, tf, w, d, n, mu, alpha, budget, lambda_cam
-
-
-def opl_max_obj_vs_budget(matfile):
-    g = lambda x: np.exp(-w * x)
-    t0, tf, w, d, n, mu, alpha, budget, lambda_cam = loadmat(matfile)
-
-    obj = np.zeros(budget.shape[0])
-    for i in range(budget.shape[0]):
-        def u_opl(t):
-            return [lambda_cam[i, j] for j in range(n)]
-        obj[i] = eval_activity_max(tf, u_opl, d, t0, tf, alpha, w)
-
-    data = {'obj': obj, 'budget': budget, 'n': n, 'mu': mu, 'alpha': alpha, 'w': w, 't0': t0, 'tf': tf, 'd': d,
-            'seed': RND_SEED}
-    sio.savemat('./result/opl_max_obj_vs_budget.mat', data)
-    with open('./result/opl_max_obj_vs_budget.pickle', 'wb') as f:
-        pickle.dump(data, f)
-    return
+    lambda_opl = data['lambda_opl']
+    return t0, tf, w, d, n, ell, mu, alpha, budget, lambda_opl, seed
 
 
 def opl_max_events_vs_budget(matfile, itr):
     g = lambda x: np.exp(-w * x)
-    t0, tf, w, d, n, mu, alpha, budget, lambda_cam = loadmat(matfile)
+    t0, tf, w, d, n, ell, mu, alpha, budget, lambda_opl, seed = loadmat(matfile)
 
-    event_num = np.zeros([len(budget), itr])
     terminal_event_num = np.zeros([len(budget), itr])
-    for i in range(budget.shape[0]):
+    for i in range(len(budget)):
         def u_opl(t):
-            return [lambda_cam[i, j] for j in range(n)]
+            return [lambda_opl[i, j] for j in range(n)]
         for j in range(itr):
             times_opl, _ = generate_events(t0, tf, mu, alpha, u_opl, g=g)
-            event_num[i, j] = len(times_opl)
             terminal_event_num[i, j] = count_events(times_opl, tf - 1, tf)
+
     obj = np.mean(terminal_event_num, 1)
-    data = {'obj': obj, 'event_num': event_num, 'terminal_event_num': terminal_event_num, 'budget': budget, 'n': n,
-            'mu': mu, 'alpha': alpha, 'w': w, 't0': t0, 'tf': tf, 'd': d, 'seed': RND_SEED}
+    data = {'obj': obj, 'terminal_event_num': terminal_event_num, 'budget': budget, 'n': n,
+            'mu': mu, 'alpha': alpha, 'w': w, 't0': t0, 'tf': tf, 'd': d, 'seed': seed}
     sio.savemat('./result/opl_max_events_vs_budget.mat', data)
     with open('./result/opl_max_events_vs_budget.pickle', 'wb') as f:
+        pickle.dump(data, f)
+    return
+
+
+def opl_shaping_events_vs_budget(matfile, itr):
+    g = lambda x: np.exp(-w * x)
+    t0, tf, w, d, n, ell, mu, alpha, budget, lambda_opl, seed = loadmat(matfile)
+
+    terminal_event_num = np.zeros([len(budget), n])
+    for i in range(len(budget)):
+        def u_opl(t):
+            return [lambda_opl[i, j] for j in range(n)]
+        for j in range(itr):
+            times_opl, users_opl = generate_events(t0, tf, mu, alpha, u_opl, g=g)
+            terminal_event_num[i, :] += count_user_events(times_opl, users_opl, n, tf - 1, tf)
+        terminal_event_num[i, :] = terminal_event_num[i, :] / itr
+
+    obj = np.zeros((1, len(budget)))
+    for i in range(len(budget)):
+        obj[i] = norm(terminal_event_num[i, :] - ell) ** 2
+
+    data = {'obj': obj, 'terminal_event_num': terminal_event_num, 'budget': budget, 'n': n,
+            'mu': mu, 'alpha': alpha, 'w': w, 't0': t0, 'tf': tf, 'd': d, 'seed': seed}
+    sio.savemat('./result/opl_shaping_events_vs_budget.mat', data)
+    with open('./result/opl_shaping_events_vs_budget.pickle', 'wb') as f:
         pickle.dump(data, f)
     return
 
@@ -462,8 +469,7 @@ def main():
     sparsity = 0.3
     mu_max = 0.01
     alpha_max = 0.1
-    w_m = 1
-    w_s = 2
+    w = 1
     b = 100 * mu_max
     d = np.ones(n)
     budget = np.array([0.5, 10, 20, 50, 100, 150, 200, 250])
@@ -473,26 +479,31 @@ def main():
 
     # ell for shaping terminal
     ell = 2 * np.array([0.250, 0.250, 0.500, 0.7500] * int(n / 4))
-    ell = ell - np.dot(g_max_int(0, tf, alpha, w_m), mu)
+    ell = ell - np.dot(g_max_int(0, tf, alpha, w), mu)
     # ell for shaping integral
     ell_int = 6 * np.array([0.250, 0.250, 0.500, 0.7500] * int(n / 4))
-    base_activity = g_ls_int(tf, tf, alpha, w_s).dot(mu)
+    base_activity = g_ls_int(tf, tf, alpha, w).dot(mu)
     ell_int = ell_int + base_activity
 
-    opl_max_obj_vs_budget('./result/mehrdad_max.mat')
+    data = {'t0': t0, 'tf': tf, 'n': n, 'sparsity': sparsity, 'mu_max': mu_max, 'alpha_max': alpha_max,
+            'w': w, 'b': b, 'd': d, 'budget': budget, 'itr': itr, 'mu': mu, 'alpha': alpha,
+            'ell': ell, 'ell_int': ell_int, 'base_activity': base_activity, 'seed': RND_SEED}
+    sio.savemat('./model/synth_n64_w' + str(w) + '.mat', data)
 
-    # max_obj_vs_budget(budget, n, mu, alpha, w_m, t0, tf, b, d)
-    # max_events_vs_budget(budget, n, mu, alpha, w_m, t0, tf, b, d, itr)
-    # max_int_obj_vs_budget(budget, n, mu, alpha, w_m, t0, tf, b, d)
-    # max_int_events_vs_budget(budget, n, mu, alpha, w_m, t0, tf, b, d, itr)
+    # opl_max_obj_vs_budget('./result/opl_max.mat')
 
-    # shaping_obj_vs_budget(budget, n, mu, alpha, w_m, t0, tf, b, ell)
-    # shaping_events_vs_budget(budget, n, mu, alpha, w_m, t0, tf, b, ell, itr)
-    # shaping_int_obj_vs_budget(budget, n, mu, alpha, w_s, t0, tf, b, ell_int)
-    # shaping_int_events_vs_budget(budget, n, mu, alpha, w_s, t0, tf, b, ell_int, base_activity, itr)
+    # max_obj_vs_budget(budget, n, mu, alpha, w, t0, tf, b, d)
+    # max_events_vs_budget(budget, n, mu, alpha, w, t0, tf, b, d, itr)
+    # max_int_obj_vs_budget(budget, n, mu, alpha, w, t0, tf, b, d)
+    # max_int_events_vs_budget(budget, n, mu, alpha, w, t0, tf, b, d, itr)
 
-    # max_int_events_vs_time(budget[-1], n, mu, alpha, w_m, t0, tf, b, d, itr)
-    # shaping_int_events_vs_time(budget[-1], n, mu, alpha, w_s, t0, tf, b, ell, base_activity, itr)
+    # shaping_obj_vs_budget(budget, n, mu, alpha, w, t0, tf, b, ell)
+    # shaping_events_vs_budget(budget, n, mu, alpha, w, t0, tf, b, ell, itr)
+    # shaping_int_obj_vs_budget(budget, n, mu, alpha, w, t0, tf, b, ell_int)
+    # shaping_int_events_vs_budget(budget, n, mu, alpha, w, t0, tf, b, ell_int, base_activity, itr)
+
+    # max_int_events_vs_time(budget[-1], n, mu, alpha, w, t0, tf, b, d, itr)
+    # shaping_int_events_vs_time(budget[-1], n, mu, alpha, w, t0, tf, b, ell, base_activity, itr)
 
 
 if __name__ == '__main__':

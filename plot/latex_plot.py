@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import scipy.io as sio
 import pickle
 # import os
 # PWD = os.path.dirname(os.path.realpath(__file__))
@@ -59,19 +60,19 @@ def tex_plot(x, y, path, xlabel, ylabel, legend, xtick):
 
 def main():
     legend = ['OPT', 'DEG', 'PRK', 'UNF']
+    legend_opl = ['OPT', 'DEG', 'PRK', 'UNF', 'OPL']
     xlabel = r'$c$ (budget)'
     xtick = [0, 50, 100, 150, 200, 250]
 
     # Maximization Terminal Objective vs Budget
     path = '../result/max_obj_vs_budget'
     obj, budget = load(path)
-    path = '../result/opl_max_obj_vs_budget'
-    obj_mehrdad, _ = load(path)
+    obj_opl = sio.loadmat('../result/opl_max_obj_vs_budget.mat')['obj']
+    obj = np.vstack((obj, obj_opl))
     ylabel = r'$w^T E[dN(T)]$'
-    obj = np.vstack((obj, obj_mehrdad))
-    tex_plot(budget, obj, path, xlabel, ylabel, ['OPT', 'DEG', 'PRK', 'UNF', 'OPL'], xtick)
+    tex_plot(budget, obj, path, xlabel, ylabel, legend_opl, xtick)
 
-    # # # Maximization Terminal EventsNum vs Budget
+    # # Maximization Terminal EventsNum vs Budget
     # path = '../result/max_events_vs_budget'
     # obj, budget = load(path)
     # ylabel = r'$w^T\,\overline{dN(T)}$'
@@ -92,10 +93,17 @@ def main():
     # # Shaping Terminal Objective vs Budget
     # path = '../result/shaping_obj_vs_budget'
     # obj, budget = load(path)
-    # obj_opl = np.array([41.0602, 32.6496, 25.4690, 14.2205, 11.8728, 11.5925, 11.5925, 11.5925])
+    # obj_opl = sio.loadmat('../result/opl_shaping_obj_vs_budget.mat')['obj']
     # obj = np.vstack((obj, obj_opl))
     # ylabel = r'$\|E[dN(T)] - \ell \|_2^2$'
-    # tex_plot(budget, obj, path, xlabel, ylabel, ['OPT', 'DEG', 'PRK', 'UNF', 'OPL'], xtick)
+    # tex_plot(budget, obj, path, xlabel, ylabel, legend_opl, xtick)
+    #
+    # path = '../result/shaping_obj_vs_budget'
+    # obj, budget = load(path)
+    # # obj_opl = np.array([41.0602, 32.6496, 25.4690, 14.2205, 11.8728, 11.5925, 11.5925, 11.5925])
+    # obj = np.vstack((obj, obj_opl))
+    # ylabel = r'$\|E[dN(T)] - \ell \|_2^2$'
+    # tex_plot(budget, obj, path, xlabel, ylabel, legend_opl, xtick)
     #
     # # Shaping Terminal EventsNum vs Budget
     # path = '../result/shaping_events_vs_budget'
