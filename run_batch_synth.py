@@ -59,58 +59,12 @@ def loadmat(matfile):
     d = data['d'][:, 0]
     n = data['n'][0][0]
     seed = data['seed'][0][0]
-    ell = data['ell'][:, 0]
-    mu = data['mu'][:, 0]
+    ell = data['ell'][0]
+    mu = data['mu'][0]
     alpha = data['alpha']
-    budget = data['budget'][:, 0]
+    budget = data['budget'][0]
     lambda_opl = data['lambda_opl']
     return t0, tf, w, d, n, ell, mu, alpha, budget, lambda_opl, seed
-
-
-def opl_max_events_vs_budget(matfile, itr):
-    g = lambda x: np.exp(-w * x)
-    t0, tf, w, d, n, ell, mu, alpha, budget, lambda_opl, seed = loadmat(matfile)
-
-    terminal_event_num = np.zeros([len(budget), itr])
-    for i in range(len(budget)):
-        def u_opl(t):
-            return [lambda_opl[i, j] for j in range(n)]
-        for j in range(itr):
-            times_opl, _ = generate_events(t0, tf, mu, alpha, u_opl, g=g)
-            terminal_event_num[i, j] = count_events(times_opl, tf - 1, tf)
-
-    obj = np.mean(terminal_event_num, 1)
-    data = {'obj': obj, 'terminal_event_num': terminal_event_num, 'budget': budget, 'n': n,
-            'mu': mu, 'alpha': alpha, 'w': w, 't0': t0, 'tf': tf, 'd': d, 'seed': seed}
-    sio.savemat('./result/opl_max_events_vs_budget.mat', data)
-    with open('./result/opl_max_events_vs_budget.pickle', 'wb') as f:
-        pickle.dump(data, f)
-    return
-
-
-def opl_shaping_events_vs_budget(matfile, itr):
-    g = lambda x: np.exp(-w * x)
-    t0, tf, w, d, n, ell, mu, alpha, budget, lambda_opl, seed = loadmat(matfile)
-
-    terminal_event_num = np.zeros([len(budget), n])
-    for i in range(len(budget)):
-        def u_opl(t):
-            return [lambda_opl[i, j] for j in range(n)]
-        for j in range(itr):
-            times_opl, users_opl = generate_events(t0, tf, mu, alpha, u_opl, g=g)
-            terminal_event_num[i, :] += count_user_events(times_opl, users_opl, n, tf - 1, tf)
-        terminal_event_num[i, :] = terminal_event_num[i, :] / itr
-
-    obj = np.zeros((1, len(budget)))
-    for i in range(len(budget)):
-        obj[i] = norm(terminal_event_num[i, :] - ell) ** 2
-
-    data = {'obj': obj, 'terminal_event_num': terminal_event_num, 'budget': budget, 'n': n,
-            'mu': mu, 'alpha': alpha, 'w': w, 't0': t0, 'tf': tf, 'd': d, 'seed': seed}
-    sio.savemat('./result/opl_shaping_events_vs_budget.mat', data)
-    with open('./result/opl_shaping_events_vs_budget.pickle', 'wb') as f:
-        pickle.dump(data, f)
-    return
 
 
 def max_obj_vs_budget(budget, n, mu, alpha, w, t0, tf, b, d):
@@ -489,9 +443,6 @@ def main():
     #         'w': w, 'b': b, 'd': d, 'budget': budget, 'itr': itr, 'mu': mu, 'alpha': alpha,
     #         'ell': ell, 'ell_int': ell_int, 'base_activity': base_activity, 'seed': RND_SEED}
     # sio.savemat('./model/synth_n64_w' + str(w) + '.mat', data)
-
-    opl_max_events_vs_budget('./result/opl_max_obj_vs_budget.mat', itr)
-    opl_shaping_events_vs_budget('./result/opl_shaping_obj_vs_budget.mat', itr)
 
     # max_obj_vs_budget(budget, n, mu, alpha, w, t0, tf, b, d)
     # max_events_vs_budget(budget, n, mu, alpha, w, t0, tf, b, d, itr)
