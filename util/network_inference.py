@@ -1,7 +1,7 @@
 import numpy as np
 import pickle
 from scipy.io import loadmat
-from tick.inference import HawkesExpKern
+from tick.hawkes.inference import HawkesExpKern
 
 
 def load(matfile):

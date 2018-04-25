@@ -88,10 +88,11 @@ def activity_shaping_int(b, c, ell, t0, tf, alpha, w, tol=1e-8):
     g_ls_0 = g_ls(0, tf, alpha, w)
     res = least_squares(lambda s: 1e5 * (np.sum(s) > c) +
                                   (sum([s[i] * g_ls_0[:, i] for i in range(n)]) - ell), x_0,
-                        bounds=(np.zeros(n), b * tf * np.ones(n)), loss='linear', xtol=tol)
+                        bounds=(np.zeros(n), b * tf * np.ones(n)), loss='linear', xtol=tol, verbose=True)
+    # TODO: synth result done with 10 instead of (tf/20), check it
     x_opt = res.x
-    t_opt = 10 * np.ones(n)
-    u_opt = x_opt / 10
+    t_opt = (tf/20) * np.ones(n)
+    u_opt = x_opt / (tf/20)
     return t_opt, u_opt
 
 

@@ -46,7 +46,7 @@ def count_events(times, a, b):
 def count_user_events(times, users, n, a, b):
     count = np.zeros(n)
     for i in range(len(times)):
-        if a < times[i] < b:
+        if a <= times[i] <= b:
             count[users[i]] += 1
     return count
 
