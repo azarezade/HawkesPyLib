@@ -25,8 +25,7 @@ def events_to_tick_events(events, n):
 
 
 def inference(dataset, decays):
-    matfile = "./data/" + dataset + ".mat"
-    adj, events, n = load(matfile)
+    adj, events, n = load(dataset)
 
     tick_events = events_to_tick_events(events, n)
 
@@ -42,4 +41,4 @@ def inference(dataset, decays):
 
 
 if __name__ == "__main__":
-    inference("club", 25000)
+    inference("../data/club.mat", 25000)
