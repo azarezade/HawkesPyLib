@@ -4,7 +4,7 @@
 # import mkl
 # mkl.set_num_threads(n)
 
-import matplotlib as mpl; mpl.use('Agg')
+import matplotlib as mpl # ; mpl.use('Agg')
 from numpy.linalg import inv
 from scipy.linalg import logm, expm
 from scipy.optimize import fsolve, brentq
@@ -141,12 +141,12 @@ def activity_max_int(b, c, d, t0, tf, alpha, w=1, tol=1e-1):
             lb = m
         else:
             ub = m
-        # TODO: the following stopping cond is add-hoc, change it!
-        if ub - lb < 1e-5:
+        # TODO: the following stopping condition is add-hoc, change it!
+        if ub - lb < 1e-10:
             if sum(t) * b - c < 0.1 * c:
                 return t
             else:
-                raise Exception("not converged ub={}, lb={}".format(ub, lb))
+                raise Exception("Not converged! ub={}, lb={}".format(ub, lb))
     return t
 
 
@@ -169,6 +169,32 @@ def eval_activity_max_int(u, d, t0, tf, alpha, w=1):
     return integral
 
 
+def plot_psi(t0, tf, n, d, alpha, w):
+    t = np.arange(t0, tf, 1)
+    y = np.zeros((n, len(t)))
+    for k in range(len(t)):
+        y_matrix = psi(t[k], alpha, w)
+        for i in range(n):
+            y[i, k] = y_matrix[:, i].dot(d)
+    for i in range(n):
+        plt.plot(t, y[i, :])
+    plt.show()
+    return
+
+
+def plot_psi_int(t0, tf, n, d, alpha, w):
+    t = np.arange(t0, tf, 1)
+    y = np.zeros((n, len(t)))
+    for k in range(len(t)):
+        y_matrix = psi_int(t[k], t0, tf, alpha, w)
+        for i in range(n):
+            y[i, k] = y_matrix[:, i].dot(d)
+    for i in range(n):
+        plt.plot(t, y[i, :])
+    plt.show()
+    return
+
+
 def main():
     # np.random.seed(0)
     t0 = 0
@@ -177,7 +203,7 @@ def main():
     sparsity = 0.3
     mu_max = 0.01
     alpha_max = 0.1
-    w = 5
+    w = 1.5
 
     b = 10 * mu_max
     c = 10 * tf * mu_max
@@ -188,20 +214,12 @@ def main():
 
     # activity_max(b, c, d, t0, tf, alpha, w)
 
-    # activity_max_int(b, c, d, t0, tf, alpha, w)
+    activity_max_int(b, c, d, t0, tf, alpha, w)
 
     # r = max(np.abs(np.linalg.eig(alpha)[0]))
-
-    # t = np.arange(t0, tf, 1)
-    # y = np.zeros((n, len(t)))
-    # for k in range(len(t)):
-    #     y_matrix = psi(t[k], alpha, w)
-    #     # y_matrix = psi_int(t[k], t0, tf, alpha, w)
-    #     for i in range(n):
-    #         y[i, k] = y_matrix[:, i].dot(d)
-    # for i in range(n):
-    #     plt.plot(t, y[i, :])
-    # plt.show()
+    # print("spectral radius r={}, w={}".format(r, w))
+    # plot_psi(t0, tf, n, d, alpha, w)
+    plot_psi_int(t0, tf, n, d, alpha, w)
 
 
 if __name__ == '__main__':
